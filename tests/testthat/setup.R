@@ -2,6 +2,7 @@ library(testthat)
 library(DrugExposure)
 library(dplyr)
 
+
 dbms <- getOption("dbms", default = "postgresql")
 message("************* Testing on ", dbms, " *************")
 
@@ -87,3 +88,5 @@ withr::defer(
   },
   testthat::teardown_env()
 )
+
+conceptSetJson <- loadConceptSetJson()
