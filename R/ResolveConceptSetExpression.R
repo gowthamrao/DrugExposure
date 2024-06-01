@@ -1,7 +1,7 @@
 #' Resolve Concept Set Expression
 #'
-#' This function resolves a given concept set expression (R object, not JSON) to retrieve relevant concept IDs 
-#' from a specified vocabulary database schema. It builds and executes a SQL query to extract concept IDs 
+#' This function resolves a given concept set expression (R object, not JSON) to retrieve relevant concept IDs
+#' from a specified vocabulary database schema. It builds and executes a SQL query to extract concept IDs
 #' based on the provided concept set expression.
 #'
 #' @param conceptSetExpression The JSON string of the concept set expression to be resolved.
@@ -16,13 +16,17 @@ resolveConceptSetExpression <- function(conceptSetExpression,
                                         connectionDetails = NULL,
                                         vocabularyDatabaseSchema,
                                         tempEmulationSchema = getOption("sqlRenderTempEmulationSchema")) {
+  # Check inputs
+  checkmate::assertList(conceptSetExpression, min.len = 1)
+  checkmate::assertCharacter(vocabularyDatabaseSchema, len = 1)
+
   conceptSetSql <-
     CirceR::buildConceptSetQuery(conceptSetJSON = conceptSetExpression |> RJSONIO::toJSON(digits = 23))
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  
+
   conceptIds <-
     DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
@@ -32,7 +36,7 @@ resolveConceptSetExpression <- function(conceptSetExpression,
       vocabulary_database_schema = vocabularyDatabaseSchema
     ) |>
     dplyr::tibble() |>
-    dplyr::arrange(conceptId)
-  
+    dplyr::arrange(.data$conceptId)
+
   return(conceptIds)
 }

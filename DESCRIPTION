@@ -17,12 +17,12 @@ Imports:
     checkmate,
     dplyr,
     lifecycle,
-    ParallelLogger,
-    SqlRender
+    rlang
 Suggests:
   Eunomia,
   remotes,
   rmarkdown,
+  RJSONIO,
   knitr,
 	testthat,
 	withr
