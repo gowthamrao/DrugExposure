@@ -82,14 +82,6 @@ if (cdmDatabaseSchema == "" || dbServer == "") {
   skipCdmTests <- TRUE
 }
 
-
-withr::defer(
-  {
-  },
-  testthat::teardown_env()
-)
-
-
 conceptSetExpressionDataFrame <- dplyr::tibble(
   CONCEPT_CLASS_ID = "Ingredient",
   CONCEPT_CODE = "140587",
@@ -116,4 +108,10 @@ conceptSetExpression$items[[1]]$includeDescendants <- TRUE
 conceptSetExpression$items[[1]]$includeMapped <- FALSE
 
 
-conceptSetJson <- conceptSetExpression |> RJSONIO::toJSON(digits = 23, pretty = TRUE)
+withr::defer(
+  {
+  },
+  testthat::teardown_env()
+)
+
+
