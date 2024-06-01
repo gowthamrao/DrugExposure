@@ -13,15 +13,16 @@ Depends:
 	DatabaseConnector (>= 5.0.0),
 	R (>= 4.1.0)
 Imports:
+    CirceR,
     checkmate,
     dplyr,
     lifecycle,
-    ParallelLogger,
-    SqlRender
+    rlang
 Suggests:
   Eunomia,
   remotes,
   rmarkdown,
+  RJSONIO,
   knitr,
 	testthat,
 	withr

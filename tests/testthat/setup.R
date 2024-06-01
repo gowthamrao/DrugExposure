@@ -2,6 +2,7 @@ library(testthat)
 library(DrugExposure)
 library(dplyr)
 
+
 dbms <- getOption("dbms", default = "postgresql")
 message("************* Testing on ", dbms, " *************")
 
@@ -87,3 +88,32 @@ withr::defer(
   },
   testthat::teardown_env()
 )
+
+
+conceptSetExpressionDataFrame <- dplyr::tibble(
+  CONCEPT_CLASS_ID = "Ingredient",
+  CONCEPT_CODE = "140587",
+  CONCEPT_ID = 1118084,
+  CONCEPT_NAME = "celecoxib",
+  DOMAIN_ID = "Drug",
+  INVALID_REASON = "V",
+  INVALID_REASON_CAPTION = "Valid",
+  STANDARD_CONCEPT = "S",
+  STANDARD_CONCEPT_CAPTION = "Standard",
+  VOCABULARY_ID = "RxNorm",
+  VALID_START_DATE = as.Date("1969-12-31"),
+  VALID_END_DATE = as.Date("2099-12-30")
+)
+
+conceptSetExpression <- list()
+conceptSetExpression$items <- list()
+conceptSetExpression$items[[1]] <- list()
+conceptSetExpression$items[[1]]$concept <-
+  conceptSetExpressionDataFrame[1, ] |>
+  as.list()
+conceptSetExpression$items[[1]]$isExcluded <- FALSE
+conceptSetExpression$items[[1]]$includeDescendants <- TRUE
+conceptSetExpression$items[[1]]$includeMapped <- FALSE
+
+
+conceptSetJson <- conceptSetExpression |> RJSONIO::toJSON(digits = 23, pretty = TRUE)
