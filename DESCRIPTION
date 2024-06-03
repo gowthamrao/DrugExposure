@@ -1,8 +1,8 @@
 Package: DrugExposure
 Type: Package
-Title: DrugExposure: To learn patterns of Medication Compliance and Persistence
+Title: DrugExposure: To learn patterns of Medication Compliance, Aderence and Persistence
 Version: 0.0.1
-Date: 2024-06-01
+Date: 2024-06-02
 Authors@R: c(
     person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),
     person("Observational Health Data Science and Informatics", role = c("cph"))
@@ -13,10 +13,13 @@ Depends:
 	DatabaseConnector (>= 5.0.0),
 	R (>= 4.1.0)
 Imports:
+    CohortAlgebra,
+    checkmate,
     CirceR,
     dplyr,
     lifecycle,
-    rlang
+    rlang,
+    SqlRender
 Suggests:
   Eunomia,
   remotes,
@@ -26,8 +29,7 @@ Suggests:
 	testthat,
 	withr
 Remotes:
-  ohdsi/Eunomia,
-  ohdsi/ParallelLogger
+  ohdsi/CirceR
 License: Apache License
 RoxygenNote: 7.3.1
 VignetteBuilder: knitr

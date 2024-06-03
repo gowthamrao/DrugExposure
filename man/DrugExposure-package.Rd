@@ -3,7 +3,7 @@
 \docType{package}
 \name{DrugExposure-package}
 \alias{DrugExposure-package}
-\title{DrugExposure: DrugExposure: To learn patterns of Medication Compliance and Persistence}
+\title{DrugExposure: DrugExposure: To learn patterns of Medication Compliance, Aderence and Persistence}
 \description{
 The DrugExposure R package analyzes medication compliance and persistence in cohorts. It assesses drug utilization from first exposure, calculates key metrics like medication possession ratio and proportional days covered, and enhances insights into real-world adherence to improve patient outcomes.
 
