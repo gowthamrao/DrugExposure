@@ -8,7 +8,8 @@ createCodeSetTableFromConceptSetExpression(
   conceptSetExpression,
   connection,
   vocabularyDatabaseSchema,
-  tempEmulationSchema = getOption("sqlRenderTempEmulationSchema")
+  tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
+  conceptSetTable = "#concept_sets"
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ createCodeSetTableFromConceptSetExpression(
 \item{vocabularyDatabaseSchema}{The name of the database schema containing the vocabulary tables.}
 
 \item{tempEmulationSchema}{The name of the schema used for SQL emulation of temporary tables.}
+
+\item{conceptSetTable}{The table (temp table) with concept_id.}
 }
 \value{
 A tibble containing the concept IDs sorted in ascending order.

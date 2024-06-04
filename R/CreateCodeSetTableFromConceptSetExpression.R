@@ -8,22 +8,24 @@
 #' @param connection An optional database connection object. If not provided, a connection will be established using the provided connection details.
 #' @param vocabularyDatabaseSchema The name of the database schema containing the vocabulary tables.
 #' @param tempEmulationSchema The name of the schema used for SQL emulation of temporary tables.
-#'
+#' @param conceptSetTable The table (temp table) with concept_id.
+#' 
 #' @return A tibble containing the concept IDs sorted in ascending order.
 createCodeSetTableFromConceptSetExpression <-
   function(conceptSetExpression,
            connection,
            vocabularyDatabaseSchema,
-           tempEmulationSchema = getOption("sqlRenderTempEmulationSchema")) {
+           tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
+           conceptSetTable = "#concept_sets") {
     
     conceptSetSql <-
       CirceR::buildConceptSetQuery(conceptSetJSON = conceptSetExpression |> RJSONIO::toJSON(digits = 23))
     
     conceptSetSql <- paste0(
-      "DROP TABLE IF EXISTS #concept_sets;
+      "DROP TABLE IF EXISTS @concept_set_table;
 
        SELECT concept_id
-       INTO #concept_sets
+       INTO @concept_set_table
        FROM
        ( ",
       conceptSetSql,
@@ -34,6 +36,7 @@ createCodeSetTableFromConceptSetExpression <-
       connection = connection,
       sql = conceptSetSql,
       tempEmulationSchema = tempEmulationSchema,
-      vocabulary_database_schema = vocabularyDatabaseSchema
+      vocabulary_database_schema = vocabularyDatabaseSchema,
+      concept_set_table = conceptSetTable
     )
   }

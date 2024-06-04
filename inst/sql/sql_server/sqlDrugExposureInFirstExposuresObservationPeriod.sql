@@ -3,14 +3,14 @@
 -- that subsequent drug exposures are captured only if they occur during
 -- the observation same period as the first exposure.
 
-DROP TABLE IF EXISTS #drug_exposure;
+DROP TABLE IF EXISTS @drug_exposure_output;
 
 WITH first_exposure
 AS (
 	SELECT person_id,
-		min(drug_exposure_start_date) min_start_date
+		CAST(min(drug_exposure_start_date) AS DATE) min_start_date
 	FROM @cdm_database_schema.drug_exposure de
-	INNER JOIN #concept_sets cs
+	INNER JOIN @concept_set_table cs
 		ON de.drug_concept_id = cs.concept_id
 	WHERE drug_concept_id > 0
 	GROUP BY person_id
@@ -27,7 +27,7 @@ AS (
 			AND fr.min_start_date <= op.observation_period_end_date
 	)
 SELECT *
-INTO #drug_exposure
+INTO @drug_exposure_output
 FROM
 (
   SELECT de.person_id,
@@ -39,12 +39,12 @@ FROM
   			THEN 1
   		ELSE days_supply
   		END days_supply,
-  	COALESCE(DRUG_EXPOSURE_END_DATE, 
+  	CAST(COALESCE(DRUG_EXPOSURE_END_DATE, 
     		          DATEADD(day, DAYS_SUPPLY, DRUG_EXPOSURE_START_DATE), 
     		          DATEADD(day, 1, DRUG_EXPOSURE_START_DATE)
-    		        ) AS DRUG_EXPOSURE_END_DATE
+    		        ) AS DATE) AS DRUG_EXPOSURE_END_DATE
   FROM @cdm_database_schema.drug_exposure de
-  INNER JOIN #concept_sets cs
+  INNER JOIN @concept_set_table cs
   	ON de.drug_concept_id = cs.concept_id
   INNER JOIN limit_observation_period fr
   	ON fr.person_id = de.person_id
@@ -67,12 +67,12 @@ FROM
   			THEN 1
   		ELSE days_supply
   		END days_supply,
-  	COALESCE(DRUG_EXPOSURE_END_DATE, 
+  	CAST(COALESCE(DRUG_EXPOSURE_END_DATE, 
     		          DATEADD(day, DAYS_SUPPLY, DRUG_EXPOSURE_START_DATE), 
     		          DATEADD(day, 1, DRUG_EXPOSURE_START_DATE)
-    		        ) AS DRUG_EXPOSURE_END_DATE
+    		        ) AS DATE) AS DRUG_EXPOSURE_END_DATE
   FROM @cdm_database_schema.drug_exposure de
-  INNER JOIN #concept_sets cs
+  INNER JOIN @concept_set_table cs
   	ON de.drug_source_concept_id = cs.concept_id
   INNER JOIN limit_observation_period fr
   	ON fr.person_id = de.person_id
