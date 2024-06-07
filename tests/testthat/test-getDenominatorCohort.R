@@ -1,5 +1,4 @@
-testthat::test_that("Create earliest DrugExposure In First ObservationPeriod Cohort", {
-  
+testthat::test_that("Get denominator cohort", {
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
   
@@ -10,21 +9,19 @@ testthat::test_that("Create earliest DrugExposure In First ObservationPeriod Coh
     conceptSetTable = "#concept_sets"
   )
   
-  getEarliestDrugExposureCohort(
+  getDenominatorCohort(
     connection = connection,
     cdmDatabaseSchema = cdmDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
-    outputCohortTable = "#de_no_subset",
-    outputCohortId = 1,
+    denominatorCohortTable = "#denominator",
+    denominatorCohortId = 1,
     conceptSetTable = "#concept_sets",
-    drugFirstStartLeftCensorDate = NULL,
-    drugFirstStartRightCensorDate = NULL,
     restrictToFirstObservationperiod = TRUE
   )
   
   cohort <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
-    sql = "SELECT min(subject_id) subject_id FROM #de_no_subset;",
+    sql = "SELECT min(subject_id) subject_id FROM #denominator;",
     tempEmulationSchema = tempEmulationSchema,
     snakeCaseToCamelCase = TRUE
   )

@@ -9,18 +9,22 @@
 #' @template VocabularyDatabaseSchema
 #' @template TempEmulationSchema
 #' @template ConceptSetTable
+#' @param denominatorCohortDatabaseSchema (optional) The cohort database schema that has the denominator cohort.
+#' @param denominatorCohortTable Denominator cohort table.
+#' @param denominatorCohortId (optional) The cohort id of the denominator cohort. Default 0.
 #' @param drugExposureOutputTable the output table
-#' @param cohortDatabaseSchema The name of the schema with cohort table. Only use when subset definitions are used.
 #'
-getDrugExposureInFirstExposuresObservationPeriod <-
+GetDrugExposureInDenominatorCohort <-
   function(connection = NULL,
            conceptSetExpression,
            cdmDatabaseSchema,
            vocabularyDatabaseSchema = cdmDatabaseSchema,
            tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
            conceptSetTable = "#concept_sets",
-           drugExposureOutputTable = "#drug_exposure_output",
-           cohortDatabaseSchema = NULL) {
+           denominatorCohortDatabaseSchema = NULL,
+           denominatorCohortTable = "#denominator",
+           denominatorCohortId = 0,
+           drugExposureOutputTable = "#drug_exposure") {
     
     sqlDrugExposureInFirstExposuresObservationPeriod <-
       SqlRender::readSql(
@@ -31,14 +35,14 @@ getDrugExposureInFirstExposuresObservationPeriod <-
           package = utils::packageName()
         )
       )
-    
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = sqlDrugExposureInFirstExposuresObservationPeriod,
-      cdm_database_schema = cdmDatabaseSchema,
-      tempEmulationSchema = tempEmulationSchema,
-      drug_exposure_output = drugExposureOutputTable,
-      concept_set_table = conceptSetTable
-    )
+    # 
+    # DatabaseConnector::renderTranslateExecuteSql(
+    #   connection = connection,
+    #   sql = sqlDrugExposureInFirstExposuresObservationPeriod,
+    #   cdm_database_schema = cdmDatabaseSchema,
+    #   tempEmulationSchema = tempEmulationSchema,
+    #   drug_exposure_output = drugExposureOutputTable,
+    #   concept_set_table = conceptSetTable
+    # )
     
   }
