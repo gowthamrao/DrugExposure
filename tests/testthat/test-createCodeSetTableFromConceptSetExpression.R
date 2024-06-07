@@ -1,4 +1,4 @@
-testthat::test_that("Resolve Concept Set Expression", {
+testthat::test_that("Create CodeSet Table From ConceptSetExpression", {
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
   

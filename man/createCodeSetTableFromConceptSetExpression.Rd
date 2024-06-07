@@ -5,21 +5,31 @@
 \title{Resolve Concept Set Expression}
 \usage{
 createCodeSetTableFromConceptSetExpression(
-  conceptSetExpression,
   connection,
   vocabularyDatabaseSchema,
+  conceptSetExpression,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   conceptSetTable = "#concept_sets"
 )
 }
 \arguments{
-\item{conceptSetExpression}{The JSON string of the concept set expression to be resolved.}
+\item{connection}{An object of type \code{connection} as created using the
+\code{\link[DatabaseConnector]{connect}} function in the
+DatabaseConnector package. Can be left NULL if \code{connectionDetails}
+is provided, in which case a new connection will be opened at the start
+of the function, and closed when the function finishes.}
 
-\item{connection}{An optional database connection object. If not provided, a connection will be established using the provided connection details.}
+\item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is
+commonly the same as cdmDatabaseSchema. Note that for
+SQL Server, this should include both the database and
+schema name, for example 'vocabulary.dbo'.}
 
-\item{vocabularyDatabaseSchema}{The name of the database schema containing the vocabulary tables.}
+\item{conceptSetExpression}{A R object (list) that is conforming to OHDSI Circe concept set expression. Usually
+from ROhdsiWebApi. Defines the cncept set expression as r list object. This is converted to json and given to
+CirceR to get concept set expression sql.}
 
-\item{tempEmulationSchema}{The name of the schema used for SQL emulation of temporary tables.}
+\item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp
+tables, provide a schema with write privileges where temp tables can be created.}
 
 \item{conceptSetTable}{The table (temp table) with concept_id.}
 }
