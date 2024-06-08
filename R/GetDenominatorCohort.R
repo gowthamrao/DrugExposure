@@ -1,18 +1,20 @@
-#' Create Drug exposure cohort
+#' Create denominator cohort
 #'
-#' This function takes an input a table with person_id, drug_exposure_start_date, drug_exposure_end_date and creates
-#' a cohort table in the form of subject_id, cohort_start_date, cohort_end_date
+#' This function takes as an input a concept set expression, cdmDatabaseSchema and a list of cohort subset operators. It
+#' then identifies the first drug_exposure in the first (Default) or all observation_period record for the person and
+#' starting from the first date of drug_expoure in the observation_period (making it cohort_start_date), defines the
+#' cohort_end_date based on maxFollowUpDays bound to the same observation period. ie. observation period end date >= cohort_end_date.
 #'
 #' @template Connection
 #' @template ConceptSetExpression
 #' @template CdmDatabaseSchema
 #' @template TempEmulationSchema
-#' @param conceptSetTable A temp table that hold the resolved Concept set.
+#' @template RestrictToFirstObservationperiod
+#' @template MaxFollowUpDays
+#' @template CohortGeneratorSubsetOperators
+#' @template ConceptSetTable
 #' @param denominatorCohortTable (optional) A temp table that holds the output. This will be created.
 #' @param denominatorCohortId (optional) The cohort id of the denominator cohort. Default 0.
-#' @param restrictToFirstObservationperiod (optional) Default TRUE
-#' @param maxFollowUpDays (optional, default 365) max number of days to followup the person with continuous observation
-#' @param cohortGeneratorSubsetOperators (optional) A CohortGenerator Subset operator
 getDenominatorCohort <-
   function(connection,
            conceptSetExpression,

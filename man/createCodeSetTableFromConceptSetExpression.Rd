@@ -31,13 +31,12 @@ CirceR to get concept set expression sql.}
 \item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp
 tables, provide a schema with write privileges where temp tables can be created.}
 
-\item{conceptSetTable}{The table (temp table) with concept_id.}
+\item{conceptSetTable}{The name of a remote temp table that has the unique concept_id. Should have column name concept_id and be unique.}
 }
 \value{
 A tibble containing the concept IDs sorted in ascending order.
 }
 \description{
-This function resolves a given concept set expression (R object, not JSON) to retrieve relevant concept IDs
-from a specified vocabulary database schema. It builds and executes a SQL query to extract concept IDs
-based on the provided concept set expression.
+This function resolves a given concept set expression (R object, not JSON) to
+output a temp table with concept IDs.
 }

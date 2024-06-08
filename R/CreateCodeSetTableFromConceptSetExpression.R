@@ -1,14 +1,13 @@
 #' Resolve Concept Set Expression
 #'
-#' This function resolves a given concept set expression (R object, not JSON) to retrieve relevant concept IDs
-#' from a specified vocabulary database schema. It builds and executes a SQL query to extract concept IDs
-#' based on the provided concept set expression.
+#' This function resolves a given concept set expression (R object, not JSON) to 
+#' output a temp table with concept IDs.
 #'
 #' @template Connection
 #' @template VocabularyDatabaseSchema
 #' @template TempEmulationSchema
 #' @template ConceptSetExpression
-#' @param conceptSetTable The table (temp table) with concept_id.
+#' @template ConceptSetTable
 #'
 #' @return A tibble containing the concept IDs sorted in ascending order.
 createCodeSetTableFromConceptSetExpression <-
@@ -17,8 +16,11 @@ createCodeSetTableFromConceptSetExpression <-
            conceptSetExpression,
            tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
            conceptSetTable = "#concept_sets") {
+    
     conceptSetSql <-
-      CirceR::buildConceptSetQuery(conceptSetJSON = conceptSetExpression |> RJSONIO::toJSON(digits = 23))
+      CirceR::buildConceptSetQuery(conceptSetJSON = 
+                                     conceptSetExpression |> 
+                                     RJSONIO::toJSON(digits = 23))
     
     conceptSetSql <- paste0(
       "DROP TABLE IF EXISTS @concept_set_table;
