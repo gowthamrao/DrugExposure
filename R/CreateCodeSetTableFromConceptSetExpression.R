@@ -8,24 +8,25 @@
 #' @template TempEmulationSchema
 #' @template ConceptSetExpression
 #' @template ConceptSetTable
-#' 
+#'
 createCodeSetTableFromConceptSetExpression <-
   function(connection,
            vocabularyDatabaseSchema,
            conceptSetExpression,
            tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
            conceptSetTable = "#concept_sets") {
-    
     checkmate::assertCharacter(vocabularyDatabaseSchema, len = 1)
     checkmate::assertList(conceptSetExpression, min.len = 1)
     checkmate::assertCharacter(tempEmulationSchema, len = 1, null.ok = TRUE)
     checkmate::assertCharacter(conceptSetTable, len = 1)
-    
+
     conceptSetSql <-
-      CirceR::buildConceptSetQuery(conceptSetJSON = 
-                                     conceptSetExpression |> 
-                                     RJSONIO::toJSON(digits = 23))
-    
+      CirceR::buildConceptSetQuery(
+        conceptSetJSON =
+          conceptSetExpression |>
+            RJSONIO::toJSON(digits = 23)
+      )
+
     conceptSetSql <- paste0(
       "DROP TABLE IF EXISTS @concept_set_table;
 
@@ -36,7 +37,7 @@ createCodeSetTableFromConceptSetExpression <-
       conceptSetSql,
       " ) f;"
     )
-    
+
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = conceptSetSql,

@@ -1,7 +1,7 @@
 testthat::test_that("Create CodeSet Table From ConceptSetExpression", {
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
-  
+
   createCodeSetTableFromConceptSetExpression(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
@@ -13,7 +13,7 @@ testthat::test_that("Create CodeSet Table From ConceptSetExpression", {
     tempEmulationSchema = tempEmulationSchema,
     snakeCaseToCamelCase = TRUE
   )
-  
+
   testthat::expect_true(object = nrow(codeSetId) > 0)
   DatabaseConnector::disconnect(connection = connection)
 })

@@ -17,9 +17,10 @@ getNumeratorCohorts <- function(connection = NULL,
                                 drugExposureTable = "#drug_exposure",
                                 persistenceDays = c(0),
                                 baseCohortDefinitionId = 100) {
-  
-  persistenceDays <- persistenceDays |> unique() |> sort()
-  
+  persistenceDays <- persistenceDays |>
+    unique() |>
+    sort()
+
   sqlNonOverlappingEraWithPad <-
     SqlRender::readSql(
       system.file(
@@ -29,13 +30,12 @@ getNumeratorCohorts <- function(connection = NULL,
         package = utils::packageName()
       )
     )
-  
+
   cohortDefinitionSet <- c()
-  
+
   for (i in (1:length(persistenceDays))) {
-    
     cohortDefinitionId <- baseCohortDefinitionId + i
-    
+
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sqlNonOverlappingEraWithPad,
@@ -45,11 +45,11 @@ getNumeratorCohorts <- function(connection = NULL,
       output_table = paste0(numeratorCohortTableBaseName, "_", cohortDefinitionId),
       cohort_definition_id = i + 10,
       cohort_definition_id_not_null = !is.null(cohortDefinitionId),
-      person_id = 'person_id',
+      person_id = "person_id",
       cdm_database_schema = cdmDatabaseSchema,
       era_constructor_pad = persistenceDays[[i]]
     )
-    
+
     cohortDefinitionSet[[i]] <-
       dplyr::tibble(
         cohortId = cohortDefinitionId,
@@ -58,9 +58,8 @@ getNumeratorCohorts <- function(connection = NULL,
         cohortTableName = paste0(numeratorCohortTableBaseName, "_", cohortDefinitionId)
       )
   }
-  
+
   cohortDefinitionSet <- dplyr::bind_rows(cohortDefinitionSet)
-  
+
   return(cohortDefinitionSet)
-  
 }

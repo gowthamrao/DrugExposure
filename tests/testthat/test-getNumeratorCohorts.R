@@ -1,14 +1,14 @@
 testthat::test_that("Test creating numerator cohorts", {
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
-  
+
   createCodeSetTableFromConceptSetExpression(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     conceptSetTable = "#concept_sets"
   )
-  
+
   getDenominatorCohort(
     connection = connection,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -18,7 +18,7 @@ testthat::test_that("Test creating numerator cohorts", {
     conceptSetTable = "#concept_sets",
     restrictToFirstObservationperiod = TRUE
   )
-  
+
   getDrugExposureInDenominatorCohort(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
@@ -30,7 +30,7 @@ testthat::test_that("Test creating numerator cohorts", {
     denominatorCohortId = 0,
     drugExposureOutputTable = "#drug_exposure"
   )
-  
+
   cohortDefinitionSet <-
     getNumeratorCohorts(
       connection = connection,
@@ -41,14 +41,16 @@ testthat::test_that("Test creating numerator cohorts", {
       persistenceDays = c(0, 100, 1000),
       baseCohortDefinitionId = 100
     )
-  
+
   cohort <-
-    DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                               sql = "SELECT min(cohort_definition_id) cohort_definition_id
-                                                      FROM #numerator_101")
-  
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT min(cohort_definition_id) cohort_definition_id
+                                                      FROM #numerator_101"
+    )
+
   testthat::expect_true(object = nrow(cohort) >= 0)
-  
+
   testthat::expect_true(object = nrow(cohortDefinitionSet) > 0)
   DatabaseConnector::disconnect(connection = connection)
 })

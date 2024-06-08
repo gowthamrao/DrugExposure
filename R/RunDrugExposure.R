@@ -42,19 +42,19 @@ runDrugExposure <- function(connectionDetails = NULL,
     min.len = 1,
     unique = TRUE
   )
-  
+
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  
+
   createCodeSetTableFromConceptSetExpression(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     conceptSetTable = "#concept_sets"
   )
-  
+
   codeSets <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT CONCEPT_ID FROM #concept_sets;",
@@ -62,7 +62,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     tempEmulationSchema = tempEmulationSchema
   ) |>
     dplyr::tibble()
-  
+
   getDenominatorCohort(
     connection = connection,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -72,7 +72,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     conceptSetTable = "#concept_sets",
     restrictToFirstObservationperiod = TRUE
   )
-  
+
   denominator <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT * FROM #denominator
@@ -81,7 +81,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     tempEmulationSchema = tempEmulationSchema
   ) |>
     dplyr::tibble()
-  
+
   getDrugExposureInDenominatorCohort(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
@@ -93,7 +93,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     denominatorCohortId = 0,
     drugExposureOutputTable = "#drug_exposure"
   )
-  
+
   drugExposure <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT * FROM #drug_exposure;",
@@ -101,7 +101,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     tempEmulationSchema = tempEmulationSchema
   ) |>
     dplyr::tibble()
-  
+
   cohortDefinitionSet <-
     getNumeratorCohorts(
       connection = connection,
@@ -112,26 +112,30 @@ runDrugExposure <- function(connectionDetails = NULL,
       persistenceDays = persistenceDays,
       baseCohortDefinitionId = 100
     )
-  
+
   numeratorCohorts <- c()
-  
+
   for (i in (1:nrow(cohortDefinitionSet))) {
     numeratorCohorts[[i]] <- DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
-      sql = paste0("SELECT * FROM ", 
-                   cohortDefinitionSet[i, ]$cohortTableName, 
-                   ";"),
+      sql = paste0(
+        "SELECT * FROM ",
+        cohortDefinitionSet[i, ]$cohortTableName,
+        ";"
+      ),
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema
     ) |> dplyr::tibble()
   }
-  
-  numeratorCohorts <- dplyr::bind_rows(numeratorCohorts) |> 
-    dplyr::arrange(cohortId,
-                   subjectId)
-  
-  
-  
+
+  numeratorCohorts <- dplyr::bind_rows(numeratorCohorts) |>
+    dplyr::arrange(
+      cohortId,
+      subjectId
+    )
+
+
+
   # sqlDrugExposureDaySupplyDistribution <- "
   #     with drug_exposures as
   #     (
@@ -158,5 +162,4 @@ runDrugExposure <- function(connectionDetails = NULL,
   #     GROUP BY dispensation_sequence,
   #         drug_concept_id;
   # "
-  
 }

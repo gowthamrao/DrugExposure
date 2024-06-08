@@ -25,17 +25,19 @@
 #' @return A list of configured subset operators suitable for use in cohort generation functions.
 #' @export
 #' @examples
-#' defaultCohortGeneratorSubsetOperator(minAge = 18,
-#'                                      maxAge = 65,
-#'                                      genderSubset = c(8532),
-#'                                      restrictToEarliestOccurrence = FALSE,
-#'                                      race = 2106,
-#'                                      calendarStartDate = as.Date("2010-01-01"),
-#'                                      calendarEndDate = as.Date("2020-12-31"),
-#'                                      priorTime = 180,
-#'                                      followUpTime = 180,
-#'                                      ethnicity = 38003564,
-#'                                      limitTo = 'all')
+#' defaultCohortGeneratorSubsetOperator(
+#'   minAge = 18,
+#'   maxAge = 65,
+#'   genderSubset = c(8532),
+#'   restrictToEarliestOccurrence = FALSE,
+#'   race = 2106,
+#'   calendarStartDate = as.Date("2010-01-01"),
+#'   calendarEndDate = as.Date("2020-12-31"),
+#'   priorTime = 180,
+#'   followUpTime = 180,
+#'   ethnicity = 38003564,
+#'   limitTo = "all"
+#' )
 defaultCohortGeneratorSubsetOperator <- function(minAge = 0,
                                                  maxAge = 90,
                                                  genderSubset = c(8532, 8507),
@@ -46,8 +48,7 @@ defaultCohortGeneratorSubsetOperator <- function(minAge = 0,
                                                  priorTime = 365,
                                                  followUpTime = 365,
                                                  ethnicity = NULL,
-                                                 limitTo = 'firstEver') {
-  
+                                                 limitTo = "firstEver") {
   # Convert string dates to Date objects and validate
   if (!is.null(calendarStartDate)) {
     if (is.character(calendarStartDate)) {
@@ -55,14 +56,14 @@ defaultCohortGeneratorSubsetOperator <- function(minAge = 0,
     }
     checkmate::assertDate(calendarStartDate, add = NA)
   }
-  
+
   if (!is.null(calendarEndDate)) {
     if (is.character(calendarEndDate)) {
       calendarEndDate <- as.Date(calendarEndDate)
     }
     checkmate::assertDate(calendarEndDate, add = NA)
   }
-  
+
   # Validate inputs using checkmate
   checkmate::assertIntegerish(minAge, lower = 0, upper = 150)
   checkmate::assertIntegerish(maxAge, lower = 0, upper = 150)
@@ -71,7 +72,7 @@ defaultCohortGeneratorSubsetOperator <- function(minAge = 0,
   checkmate::assertIntegerish(priorTime, lower = 1)
   checkmate::assertIntegerish(followUpTime, lower = 1)
   checkmate::assertCharacter(limitTo)
-  
+
   subsetOperators <- list()
   subsetOperators$limitValidGenderAgeMin0 <-
     CohortGenerator::createDemographicSubset(
@@ -82,7 +83,7 @@ defaultCohortGeneratorSubsetOperator <- function(minAge = 0,
       race = race,
       ethnicity = ethnicity
     )
-  
+
   subsetOperators$limitSubset <- CohortGenerator::createLimitSubset(
     name = "",
     priorTime = priorTime,

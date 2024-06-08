@@ -9,7 +9,7 @@
 #' @template CdmDatabaseSchema
 #' @template TempEmulationSchema
 #' @template ConceptSetTable
-#' @param denominatorCohortDatabaseSchema (optional) The cohort database schema 
+#' @param denominatorCohortDatabaseSchema (optional) The cohort database schema
 #' that has the denominator cohort.
 #' @param denominatorCohortTable Denominator cohort table.
 #' @param denominatorCohortId (optional) The cohort id of the denominator cohort. Default 0.
@@ -25,7 +25,6 @@ getDrugExposureInDenominatorCohort <-
            denominatorCohortTable = "#denominator",
            denominatorCohortId = 0,
            drugExposureOutputTable = "#drug_exposure") {
-    
     # Validate inputs
     checkmate::assertList(conceptSetExpression, min.len = 1)
     checkmate::assertCharacter(cdmDatabaseSchema, len = 1)
@@ -33,7 +32,7 @@ getDrugExposureInDenominatorCohort <-
     checkmate::assertCharacter(denominatorCohortTable, len = 1)
     checkmate::assertIntegerish(denominatorCohortId, lower = 0)
     checkmate::assertCharacter(conceptSetTable, len = 1)
-    
+
     sqlDrugExposureInFirstExposuresObservationPeriod <-
       SqlRender::readSql(
         system.file(
@@ -43,14 +42,16 @@ getDrugExposureInDenominatorCohort <-
           package = utils::packageName()
         )
       )
-    
+
     if (!is.null(denominatorCohortDatabaseSchema)) {
       denominatorCohortTable <-
-        paste0(denominatorCohortDatabaseSchema,
-               ".",
-               denominatorCohortTable)
+        paste0(
+          denominatorCohortDatabaseSchema,
+          ".",
+          denominatorCohortTable
+        )
     }
-    
+
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sqlDrugExposureInFirstExposuresObservationPeriod,
@@ -60,5 +61,4 @@ getDrugExposureInDenominatorCohort <-
       concept_set_table = conceptSetTable,
       denominator_cohort_table = denominatorCohortTable
     )
-    
   }

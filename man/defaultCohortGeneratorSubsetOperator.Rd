@@ -56,15 +56,17 @@ subset operator, and allows for easily specifying demographic and temporal param
 a new cohort.
 }
 \examples{
-defaultCohortGeneratorSubsetOperator(minAge = 18,
-                                     maxAge = 65,
-                                     genderSubset = c(8532),
-                                     restrictToEarliestOccurrence = FALSE,
-                                     race = 2106,
-                                     calendarStartDate = as.Date("2010-01-01"),
-                                     calendarEndDate = as.Date("2020-12-31"),
-                                     priorTime = 180,
-                                     followUpTime = 180,
-                                     ethnicity = 38003564,
-                                     limitTo = 'all')
+defaultCohortGeneratorSubsetOperator(
+  minAge = 18,
+  maxAge = 65,
+  genderSubset = c(8532),
+  restrictToEarliestOccurrence = FALSE,
+  race = 2106,
+  calendarStartDate = as.Date("2010-01-01"),
+  calendarEndDate = as.Date("2020-12-31"),
+  priorTime = 180,
+  followUpTime = 180,
+  ethnicity = 38003564,
+  limitTo = "all"
+)
 }

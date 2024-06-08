@@ -1,5 +1,4 @@
 testthat::test_that("Test run drug exposure", {
-  
   runDrugExposure(
     connectionDetails = connectionDetails,
     conceptSetExpression = conceptSetExpression,

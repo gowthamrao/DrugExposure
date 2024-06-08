@@ -1,14 +1,14 @@
 testthat::test_that("Test creating drug exposure", {
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
-  
+
   createCodeSetTableFromConceptSetExpression(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     conceptSetTable = "#concept_sets"
   )
-  
+
   getDenominatorCohort(
     connection = connection,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -18,7 +18,7 @@ testthat::test_that("Test creating drug exposure", {
     conceptSetTable = "#concept_sets",
     restrictToFirstObservationperiod = TRUE
   )
-  
+
   getDrugExposureInDenominatorCohort(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
@@ -30,12 +30,14 @@ testthat::test_that("Test creating drug exposure", {
     denominatorCohortId = 0,
     drugExposureOutputTable = "#drug_exposure"
   )
-  
+
   cohort <-
-    DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                               sql = "SELECT min(person_id) person 
-                                                      FROM #drug_exposure;")
-  
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT min(person_id) person
+                                                      FROM #drug_exposure;"
+    )
+
   testthat::expect_true(object = nrow(cohort) >= 0)
   DatabaseConnector::disconnect(connection = connection)
 })

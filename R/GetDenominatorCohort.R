@@ -1,8 +1,8 @@
 #' Create Denominator Cohort for Drug Exposure Analysis
 #'
 #' This function constructs a cohort based on the first drug exposure within an observation period. It identifies
-#' the first drug exposure event in either the first (default) or all observation periods for each individual, based on the 
-#' concept set expression provided. The start date of this exposure is set as the cohort start date. The cohort end date 
+#' the first drug exposure event in either the first (default) or all observation periods for each individual, based on the
+#' concept set expression provided. The start date of this exposure is set as the cohort start date. The cohort end date
 #' is determined by the maximum follow-up days allowed, but it will not exceed the end date of the observation period.
 #'
 #' @template Connection
@@ -26,7 +26,6 @@ getDenominatorCohort <-
            restrictToFirstObservationperiod = TRUE,
            maxFollowUpDays = 365,
            cohortGeneratorSubsetOperators = defaultCohortGeneratorSubsetOperator()) {
-    
     sql <- "
 
     DROP TABLE IF EXISTS #candidate_cohort;
@@ -79,7 +78,7 @@ getDenominatorCohort <-
       AND op.observation_period_end_date >= de.cohort_start_date
     ;
   "
-    
+
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sql,
@@ -89,7 +88,7 @@ getDenominatorCohort <-
       denominator_cohort_id = denominatorCohortId,
       max_follow_up_days = maxFollowUpDays
     )
-    
+
     sqlToSubset <-
       dplyr::tibble(
         cohortId = 0,
@@ -107,16 +106,18 @@ getDenominatorCohort <-
       ) |>
       dplyr::filter(.data$cohortId == 1) |>
       dplyr::pull(sql) |>
-      stringr::str_replace_all(pattern = stringr::fixed("@cohort_database_schema."),
-                               replacement = "")
-    
+      stringr::str_replace_all(
+        pattern = stringr::fixed("@cohort_database_schema."),
+        replacement = ""
+      )
+
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sqlToSubset,
       cdm_database_schema = cdmDatabaseSchema,
       cohort_table = "#candidate_cohort"
     )
-    
+
     sql <- "SELECT CAST(0 AS BIGINT) cohort_definition_id,
                   subject_id,
                   cohort_start_date,
@@ -126,9 +127,10 @@ getDenominatorCohort <-
             WHERE cohort_definition_id = 1;
 
           DROP TABLE IF EXISTS #candidate_cohort;"
-    
-    DatabaseConnector::renderTranslateExecuteSql(connection = connection,
-                                                 sql = sql,
-                                                 cohort_table = denominatorCohortTable)
-    
+
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = sql,
+      cohort_table = denominatorCohortTable
+    )
   }
