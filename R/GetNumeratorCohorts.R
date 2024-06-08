@@ -47,7 +47,8 @@ getNumeratorCohorts <- function(connection = NULL,
       cohort_definition_id_not_null = !is.null(cohortDefinitionId),
       person_id = "person_id",
       cdm_database_schema = cdmDatabaseSchema,
-      era_constructor_pad = persistenceDays[[i]]
+      era_constructor_pad = persistenceDays[[i]],
+      tempEmulationSchema = tempEmulationSchema
     )
 
     cohortDefinitionSet[[i]] <-

@@ -6,7 +6,6 @@
 #' is determined by the maximum follow-up days allowed, but it will not exceed the end date of the observation period.
 #'
 #' @template Connection
-#' @template ConceptSetExpression
 #' @template CdmDatabaseSchema
 #' @template TempEmulationSchema
 #' @template RestrictToFirstObservationperiod
@@ -17,7 +16,6 @@
 #' @param denominatorCohortId Integer, optional. The ID assigned to the denominator cohort. Defaults to 1.
 getDenominatorCohort <-
   function(connection,
-           conceptSetExpression,
            cdmDatabaseSchema,
            tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
            denominatorCohortTable = "#denominator",
@@ -86,7 +84,8 @@ getDenominatorCohort <-
       restrict_first_observation_period = restrictToFirstObservationperiod,
       concept_set_table = conceptSetTable,
       denominator_cohort_id = denominatorCohortId,
-      max_follow_up_days = maxFollowUpDays
+      max_follow_up_days = maxFollowUpDays,
+      tempEmulationSchema = tempEmulationSchema
     )
 
     sqlToSubset <-

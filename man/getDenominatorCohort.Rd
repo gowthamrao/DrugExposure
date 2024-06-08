@@ -6,7 +6,6 @@
 \usage{
 getDenominatorCohort(
   connection,
-  conceptSetExpression,
   cdmDatabaseSchema,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   denominatorCohortTable = "#denominator",
@@ -23,10 +22,6 @@ getDenominatorCohort(
 DatabaseConnector package. Can be left NULL if \code{connectionDetails}
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.}
-
-\item{conceptSetExpression}{A R object (list) that is conforming to OHDSI Circe concept set expression. Usually
-from ROhdsiWebApi. Defines the cncept set expression as r list object. This is converted to json and given to
-CirceR to get concept set expression sql.}
 
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and

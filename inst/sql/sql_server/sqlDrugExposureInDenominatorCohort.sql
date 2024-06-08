@@ -59,3 +59,4 @@ FROM
   ORDER BY person_id,
       drug_exposure_start_date
 ;
+

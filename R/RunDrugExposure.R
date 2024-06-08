@@ -43,6 +43,8 @@ runDrugExposure <- function(connectionDetails = NULL,
     unique = TRUE
   )
 
+  output <- c()
+
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
@@ -55,7 +57,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     conceptSetTable = "#concept_sets"
   )
 
-  codeSets <- DatabaseConnector::renderTranslateQuerySql(
+  output$codeSets <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT CONCEPT_ID FROM #concept_sets;",
     snakeCaseToCamelCase = TRUE,
@@ -70,10 +72,11 @@ runDrugExposure <- function(connectionDetails = NULL,
     denominatorCohortTable = "#denominator",
     denominatorCohortId = 1,
     conceptSetTable = "#concept_sets",
-    restrictToFirstObservationperiod = TRUE
+    restrictToFirstObservationperiod = restrictToFirstObservationperiod,
+    cohortGeneratorSubsetOperators = cohortGeneratorSubsetOperators
   )
 
-  denominator <- DatabaseConnector::renderTranslateQuerySql(
+  output$denominator <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT * FROM #denominator
             WHERE cohort_definition_id = 1;",
@@ -94,7 +97,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     drugExposureOutputTable = "#drug_exposure"
   )
 
-  drugExposure <- DatabaseConnector::renderTranslateQuerySql(
+  output$drugExposure <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT * FROM #drug_exposure;",
     snakeCaseToCamelCase = TRUE,
@@ -102,7 +105,7 @@ runDrugExposure <- function(connectionDetails = NULL,
   ) |>
     dplyr::tibble()
 
-  cohortDefinitionSet <-
+  output$cohortDefinitionSet <-
     getNumeratorCohorts(
       connection = connection,
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -115,12 +118,12 @@ runDrugExposure <- function(connectionDetails = NULL,
 
   numeratorCohorts <- c()
 
-  for (i in (1:nrow(cohortDefinitionSet))) {
+  for (i in (1:nrow(output$cohortDefinitionSet))) {
     numeratorCohorts[[i]] <- DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
       sql = paste0(
         "SELECT * FROM ",
-        cohortDefinitionSet[i, ]$cohortTableName,
+        output$cohortDefinitionSet[i, ]$cohortTableName,
         ";"
       ),
       snakeCaseToCamelCase = TRUE,
@@ -128,13 +131,13 @@ runDrugExposure <- function(connectionDetails = NULL,
     ) |> dplyr::tibble()
   }
 
-  numeratorCohorts <- dplyr::bind_rows(numeratorCohorts) |>
+  output$numeratorCohorts <- dplyr::bind_rows(numeratorCohorts) |>
     dplyr::arrange(
-      cohortId,
-      subjectId
+      .data$cohortDefinitionId,
+      .data$subjectId
     )
 
-
+  return(output)
 
   # sqlDrugExposureDaySupplyDistribution <- "
   #     with drug_exposures as

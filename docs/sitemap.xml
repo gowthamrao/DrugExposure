@@ -13,12 +13,30 @@
     <loc>/news/index.html</loc>
   </url>
   <url>
+    <loc>/reference/createCodeSetTableFromConceptSetExpression.html</loc>
+  </url>
+  <url>
+    <loc>/reference/defaultCohortGeneratorSubsetOperator.html</loc>
+  </url>
+  <url>
     <loc>/reference/DrugExposure-package.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getDenominatorCohort.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getDrugExposureInDenominatorCohort.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getNumeratorCohorts.html</loc>
   </url>
   <url>
     <loc>/reference/index.html</loc>
   </url>
   <url>
     <loc>/reference/resolveConceptSetExpression.html</loc>
+  </url>
+  <url>
+    <loc>/reference/runDrugExposure.html</loc>
   </url>
 </urlset>

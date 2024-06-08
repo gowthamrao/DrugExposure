@@ -50,5 +50,5 @@ INNER JOIN
 ON f.subject_id = op.person_id
   AND f.cohort_start_date >= op.observation_period_start_date
   AND f.cohort_start_date <= op.observation_period_end_date
-
 ;
+

@@ -42,4 +42,5 @@ SELECT @group_id,
 FROM #drug_days,
       #intervals
 WHERE days >= interval
-GROUP BY @group_id, interval;
+GROUP BY @group_id, interval
+;
