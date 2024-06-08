@@ -47,6 +47,6 @@ that has the denominator cohort.}
 }
 \description{
 Given a concept set expression and a denominator cohort to restrict the persons
-and exposure event to period in the cohort, this function creates a temp table
+and exposure event to period in the denominator cohort, this function creates a temp table
 that has the records from drug_exposure table.
 }

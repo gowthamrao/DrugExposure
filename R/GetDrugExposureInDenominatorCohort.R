@@ -1,7 +1,7 @@
 #' get drug exposure events for a person
 #'
 #' Given a concept set expression and a denominator cohort to restrict the persons
-#' and exposure event to period in the cohort, this function creates a temp table
+#' and exposure event to period in the denominator cohort, this function creates a temp table
 #' that has the records from drug_exposure table.
 #'
 #' @template Connection
@@ -25,6 +25,14 @@ getDrugExposureInDenominatorCohort <-
            denominatorCohortTable = "#denominator",
            denominatorCohortId = 0,
            drugExposureOutputTable = "#drug_exposure") {
+    
+    # Validate inputs
+    checkmate::assertList(conceptSetExpression, min.len = 1)
+    checkmate::assertCharacter(cdmDatabaseSchema, len = 1)
+    checkmate::assertCharacter(tempEmulationSchema, len = 1, null.ok = TRUE)
+    checkmate::assertCharacter(denominatorCohortTable, len = 1)
+    checkmate::assertIntegerish(denominatorCohortId, lower = 0)
+    checkmate::assertCharacter(conceptSetTable, len = 1)
     
     sqlDrugExposureInFirstExposuresObservationPeriod <-
       SqlRender::readSql(

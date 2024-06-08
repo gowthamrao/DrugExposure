@@ -1,9 +1,9 @@
-#' Create denominator cohort
+#' Create Denominator Cohort for Drug Exposure Analysis
 #'
-#' This function takes as an input a concept set expression, cdmDatabaseSchema and a list of cohort subset operators. It
-#' then identifies the first drug_exposure in the first (Default) or all observation_period record for the person and
-#' starting from the first date of drug_expoure in the observation_period (making it cohort_start_date), defines the
-#' cohort_end_date based on maxFollowUpDays bound to the same observation period. ie. observation period end date >= cohort_end_date.
+#' This function constructs a cohort based on the first drug exposure within an observation period. It identifies
+#' the first drug exposure event in either the first (default) or all observation periods for each individual, based on the 
+#' concept set expression provided. The start date of this exposure is set as the cohort start date. The cohort end date 
+#' is determined by the maximum follow-up days allowed, but it will not exceed the end date of the observation period.
 #'
 #' @template Connection
 #' @template ConceptSetExpression
@@ -13,8 +13,8 @@
 #' @template MaxFollowUpDays
 #' @template CohortGeneratorSubsetOperators
 #' @template ConceptSetTable
-#' @param denominatorCohortTable (optional) A temp table that holds the output. This will be created.
-#' @param denominatorCohortId (optional) The cohort id of the denominator cohort. Default 0.
+#' @param denominatorCohortTable String, optional. The name of the temporary table to store cohort data. Defaults to "#denominator".
+#' @param denominatorCohortId Integer, optional. The ID assigned to the denominator cohort. Defaults to 1.
 getDenominatorCohort <-
   function(connection,
            conceptSetExpression,
@@ -26,6 +26,7 @@ getDenominatorCohort <-
            restrictToFirstObservationperiod = TRUE,
            maxFollowUpDays = 365,
            cohortGeneratorSubsetOperators = defaultCohortGeneratorSubsetOperator()) {
+    
     sql <- "
 
     DROP TABLE IF EXISTS #candidate_cohort;
@@ -115,7 +116,6 @@ getDenominatorCohort <-
       cdm_database_schema = cdmDatabaseSchema,
       cohort_table = "#candidate_cohort"
     )
-    
     
     sql <- "SELECT CAST(0 AS BIGINT) cohort_definition_id,
                   subject_id,

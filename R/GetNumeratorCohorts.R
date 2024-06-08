@@ -17,6 +17,7 @@ getNumeratorCohorts <- function(connection = NULL,
                                 drugExposureTable = "#drug_exposure",
                                 persistenceDays = c(0),
                                 baseCohortDefinitionId = 100) {
+  
   persistenceDays <- persistenceDays |> unique() |> sort()
   
   sqlNonOverlappingEraWithPad <-

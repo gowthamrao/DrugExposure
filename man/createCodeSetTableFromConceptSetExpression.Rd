@@ -2,7 +2,7 @@
 % Please edit documentation in R/CreateCodeSetTableFromConceptSetExpression.R
 \name{createCodeSetTableFromConceptSetExpression}
 \alias{createCodeSetTableFromConceptSetExpression}
-\title{Resolve Concept Set Expression}
+\title{Generate a Temporary Codeset Table from a Concept Set Expression}
 \usage{
 createCodeSetTableFromConceptSetExpression(
   connection,
@@ -33,10 +33,7 @@ tables, provide a schema with write privileges where temp tables can be created.
 
 \item{conceptSetTable}{The name of a remote temp table that has the unique concept_id. Should have column name concept_id and be unique.}
 }
-\value{
-A tibble containing the concept IDs sorted in ascending order.
-}
 \description{
-This function resolves a given concept set expression (R object, not JSON) to
-output a temp table with concept IDs.
+This function takes a Circe-generated \code{conceptSetExpression} object (list) and creates a temporary table
+containing unique concept IDs.
 }

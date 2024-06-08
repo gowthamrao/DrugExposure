@@ -2,7 +2,7 @@
 % Please edit documentation in R/GetDenominatorCohort.R
 \name{getDenominatorCohort}
 \alias{getDenominatorCohort}
-\title{Create denominator cohort}
+\title{Create Denominator Cohort for Drug Exposure Analysis}
 \usage{
 getDenominatorCohort(
   connection,
@@ -35,9 +35,9 @@ schema name, for example 'cdm_data.dbo'.}
 \item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp
 tables, provide a schema with write privileges where temp tables can be created.}
 
-\item{denominatorCohortTable}{(optional) A temp table that holds the output. This will be created.}
+\item{denominatorCohortTable}{String, optional. The name of the temporary table to store cohort data. Defaults to "#denominator".}
 
-\item{denominatorCohortId}{(optional) The cohort id of the denominator cohort. Default 0.}
+\item{denominatorCohortId}{Integer, optional. The ID assigned to the denominator cohort. Defaults to 1.}
 
 \item{conceptSetTable}{The name of a remote temp table that has the unique concept_id. Should have column name concept_id and be unique.}
 
@@ -48,8 +48,8 @@ tables, provide a schema with write privileges where temp tables can be created.
 \item{cohortGeneratorSubsetOperators}{(optional) A CohortGenerator Subset operator}
 }
 \description{
-This function takes as an input a concept set expression, cdmDatabaseSchema and a list of cohort subset operators. It
-then identifies the first drug_exposure in the first (Default) or all observation_period record for the person and
-starting from the first date of drug_expoure in the observation_period (making it cohort_start_date), defines the
-cohort_end_date based on maxFollowUpDays bound to the same observation period. ie. observation period end date >= cohort_end_date.
+This function constructs a cohort based on the first drug exposure within an observation period. It identifies
+the first drug exposure event in either the first (default) or all observation periods for each individual, based on the
+concept set expression provided. The start date of this exposure is set as the cohort start date. The cohort end date
+is determined by the maximum follow-up days allowed, but it will not exceed the end date of the observation period.
 }
