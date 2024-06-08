@@ -1,4 +1,5 @@
 ^renv$
+man-roxygenbbb
 ^renv\.lock$
 ^.*\.Rproj$
 ^\.Rproj\.user$
