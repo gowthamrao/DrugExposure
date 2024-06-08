@@ -55,6 +55,14 @@ runDrugExposure <- function(connectionDetails = NULL,
     conceptSetTable = "#concept_sets"
   )
   
+  codeSets <- DatabaseConnector::renderTranslateQuerySql(
+    connection = connection,
+    sql = "SELECT CONCEPT_ID FROM #concept_sets;",
+    snakeCaseToCamelCase = TRUE,
+    tempEmulationSchema = tempEmulationSchema
+  ) |>
+    dplyr::tibble()
+  
   getDenominatorCohort(
     connection = connection,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -64,6 +72,15 @@ runDrugExposure <- function(connectionDetails = NULL,
     conceptSetTable = "#concept_sets",
     restrictToFirstObservationperiod = TRUE
   )
+  
+  denominator <- DatabaseConnector::renderTranslateQuerySql(
+    connection = connection,
+    sql = "SELECT * FROM #denominator
+            WHERE cohort_definition_id = 1;",
+    snakeCaseToCamelCase = TRUE,
+    tempEmulationSchema = tempEmulationSchema
+  ) |>
+    dplyr::tibble()
   
   getDrugExposureInDenominatorCohort(
     connection = connection,
@@ -77,6 +94,14 @@ runDrugExposure <- function(connectionDetails = NULL,
     drugExposureOutputTable = "#drug_exposure"
   )
   
+  drugExposure <- DatabaseConnector::renderTranslateQuerySql(
+    connection = connection,
+    sql = "SELECT * FROM #drug_exposure;",
+    snakeCaseToCamelCase = TRUE,
+    tempEmulationSchema = tempEmulationSchema
+  ) |>
+    dplyr::tibble()
+  
   cohortDefinitionSet <-
     getNumeratorCohorts(
       connection = connection,
@@ -88,51 +113,24 @@ runDrugExposure <- function(connectionDetails = NULL,
       baseCohortDefinitionId = 100
     )
   
+  numeratorCohorts <- c()
   
-  # sqlCohortCreation <- paste0("
-  #   DROP TABLE IF EXISTS #cohorts;
-  #
-  #   SELECT DISTINCT cohort_definition_id,
-  #           subject_id,
-  #           CAST(cohort_start_date AS DATE) cohort_start_date,
-  #           CAST(cohort_end_date AS DATE) cohort_end_date
-  #   INTO #cohorts
-  #   FROM
-  #     (
-  #       SELECT * FROM #first_exposure
-  #       UNION ALL
-  #       SELECT * FROM #new_user
-  #       UNION ALL
-  #       SELECT * FROM #new_user_flwd
-  #       UNION ALL
-  #       SELECT * FROM #first_exposure_flwd",
-  #       paste0(" UNION ALL SELECT * FROM ", persistenceCohortDefinitionset$cohortTableName, collapse = " "),
-  #   "
-  #     ) f;
-  # ")
-  #
-  # DatabaseConnector::renderTranslateExecuteSql(
-  #   connection = connection,
-  #   sql = sqlCohortCreation,
-  #   tempEmulationSchema = tempEmulationSchema
-  # )
+  for (i in (1:nrow(cohortDefinitionSet))) {
+    numeratorCohorts[[i]] <- DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = paste0("SELECT * FROM ", 
+                   cohortDefinitionSet[i, ]$cohortTableName, 
+                   ";"),
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = tempEmulationSchema
+    ) |> dplyr::tibble()
+  }
   
-  # DatabaseConnector::renderTranslateExecuteSql(
-  #   connection = connection,
-  #   sql = paste0(
-  #     "
-  #       DROP TABLE IF EXISTS #first_exposure;
-  #       DROP TABLE IF EXISTS #new_user;
-  #       DROP TABLE IF EXISTS #new_user_flwd;
-  #       DROP TABLE IF EXISTS #first_exposure_flwd;",
-  #     paste0(
-  #       " DROP TABLE IF EXISTS ",
-  #       persistenceCohortDefinitionset$cohortTableName,
-  #       collapse = "; "
-  #     )
-  #   ),
-  #   tempEmulationSchema = tempEmulationSchema
-  # )
+  numeratorCohorts <- dplyr::bind_rows(numeratorCohorts) |> 
+    dplyr::arrange(cohortId,
+                   subjectId)
+  
+  
   
   # sqlDrugExposureDaySupplyDistribution <- "
   #     with drug_exposures as
