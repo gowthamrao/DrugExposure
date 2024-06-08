@@ -24,7 +24,6 @@ getDenominatorCohort <-
            restrictToFirstObservationperiod = TRUE,
            maxFollowUpDays = 365,
            cohortGeneratorSubsetOperators = defaultCohortGeneratorSubsetOperator()) {
-    
     sql <- "
 
     DROP TABLE IF EXISTS #candidate_cohort;
@@ -108,9 +107,12 @@ getDenominatorCohort <-
       stringr::str_replace_all(pattern = stringr::fixed("@cohort_database_schema."),
                                replacement = "")
     
-    DatabaseConnector::renderTranslateExecuteSql(connection = connection,
-                                                 sql = sqlToSubset,
-                                                 cohort_table = "#candidate_cohort")
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = sqlToSubset,
+      cdm_database_schema = cdmDatabaseSchema,
+      cohort_table = "#candidate_cohort"
+    )
     
     
     sql <- "SELECT CAST(0 AS BIGINT) cohort_definition_id,
@@ -124,7 +126,7 @@ getDenominatorCohort <-
           DROP TABLE IF EXISTS #candidate_cohort;"
     
     DatabaseConnector::renderTranslateExecuteSql(connection = connection,
-                                                 sql = sqlToSubset,
+                                                 sql = sql,
                                                  cohort_table = denominatorCohortTable)
     
   }
