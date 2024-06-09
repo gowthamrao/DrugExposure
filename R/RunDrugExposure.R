@@ -30,6 +30,14 @@ runDrugExposure <- function(connectionDetails = NULL,
                             tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
                             restrictToFirstObservationperiod = TRUE,
                             persistenceDays = c(0)) {
+  denominatorCohortDatabaseSchemaCohortTable <-
+    if (is.null(denominatorCohortDatabaseSchema)) {
+      denominatorCohortTable
+    } else {
+      paste0(denominatorCohortDatabaseSchema,
+             ".",
+             denominatorCohortTable)
+    }
   
   checkmate::assertIntegerish(
     x = persistenceDays,
@@ -67,12 +75,12 @@ runDrugExposure <- function(connectionDetails = NULL,
   
   output$denominator <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
-    sql = "SELECT * FROM @cohort_database_schema.@cohort_table
-            WHERE cohort_definition_id = 1;",
+    sql = "SELECT * FROM @cohort_table
+            WHERE cohort_definition_id = @denominator_cohort_id;",
     snakeCaseToCamelCase = TRUE,
     tempEmulationSchema = tempEmulationSchema,
-    cohort_database_schema = cohortDatabaseSchema,
-    
+    cohort_table = denominatorCohortDatabaseSchemaCohortTable,
+    denominator_cohort_id = denominatorCohortId
   ) |>
     dplyr::tibble()
   
@@ -82,9 +90,8 @@ runDrugExposure <- function(connectionDetails = NULL,
     cdmDatabaseSchema = cdmDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
     conceptSetTable = "#concept_sets",
-    denominatorCohortDatabaseSchema = NULL,
-    denominatorCohortTable = "#denominator",
-    denominatorCohortId = 0,
+    denominatorCohortTable = denominatorCohortDatabaseSchemaCohortTable,
+    denominatorCohortId = denominatorCohortId,
     drugExposureOutputTable = "#drug_exposure"
   )
   
@@ -114,7 +121,7 @@ runDrugExposure <- function(connectionDetails = NULL,
       connection = connection,
       sql = paste0(
         "SELECT * FROM ",
-        output$cohortDefinitionSet[i,]$cohortTableName,
+        output$cohortDefinitionSet[i, ]$cohortTableName,
         ";"
       ),
       snakeCaseToCamelCase = TRUE,

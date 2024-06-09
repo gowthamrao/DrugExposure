@@ -19,8 +19,7 @@ Imports:
     dplyr,
     lifecycle,
     rlang,
-    SqlRender,
-    stringr
+    SqlRender
 Suggests:
   Eunomia,
   remotes,

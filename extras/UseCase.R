@@ -5,10 +5,6 @@ ROhdsiWebApi::authorizeWebApi(baseUrl = Sys.getenv("BaseUrl"), authMethod = "win
 conceptSetExpression <-
   ROhdsiWebApi::getConceptSetDefinition(conceptSetId = 7677, baseUrl = Sys.getenv("BaseUrl"))
 
-cohortTables <-
-  CohortGenerator::getCohortTableNames(cohortTable = "drug_exposure")
-
-
 connectionDetails <-
   OhdsiHelpers::createConnectionDetails(cdmSources = cdmSources,
                                         database = "truven_mdcd",
@@ -16,22 +12,15 @@ connectionDetails <-
 cdmSource <-
   OhdsiHelpers::getCdmSource(cdmSources = cdmSources, database = "truven_mdcd")
 
-CohortGenerator::createCohortTables(
-  connectionDetails = connectionDetails,
-  cohortDatabaseSchema = cdmSource$cohortDatabaseSchema,
-  cohortTableNames = cohortTables,
-  incremental = TRUE
-)
-
-CohortAlgebra::copyCohorts(connectionDetails = connectionDetails,)
-
 debug(DrugExposure::runDrugExposure)
 DrugExposure::runDrugExposure(
   connectionDetails = connectionDetails,
   conceptSetExpression = conceptSetExpression$expression,
-  cdmDatabaseSchema = cdmSource$cdmDatabaseSchemaFinal,
-  vocabularyDatabaseSchema = cdmSource$vocabDatabaseSchemaFinal,
+  cdmDatabaseSchema = cdmSource$cdmDatabaseSchema,
+  vocabularyDatabaseSchema = cdmSource$vocabDatabaseSchema,
   restrictToFirstObservationperiod = TRUE,
-  maxFollowUpDays = 365,
+  denominatorCohortDatabaseSchema = cdmSource$resultsDatabaseSchema,
+  denominatorCohortTable = "cohort",
+  denominatorCohortId = 17332,
   persistenceDays = c(0, 30, 60)
 )
