@@ -36,12 +36,11 @@ tables, provide a schema with write privileges where temp tables can be created.
 
 \item{conceptSetTable}{The name of a remote temp table that has the unique concept_id. Should have column name concept_id and be unique.}
 
-\item{denominatorCohortDatabaseSchema}{(optional) The cohort database schema
-that has the denominator cohort.}
+\item{denominatorCohortDatabaseSchema}{The cohort database schema that has the denominator cohort.}
 
-\item{denominatorCohortTable}{Denominator cohort table.}
+\item{denominatorCohortTable}{The cohort table name that has the denominator cohort.}
 
-\item{denominatorCohortId}{(optional) The cohort id of the denominator cohort. Default 0.}
+\item{denominatorCohortId}{The cohort id of the denominator cohort.}
 
 \item{drugExposureOutputTable}{the output table}
 }

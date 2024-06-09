@@ -30,6 +30,45 @@ dir.create(folder, recursive = TRUE)
 skipCdmTests <- FALSE
 
 
+
+if (dbms == "sqlite") {
+  databaseFile <- paste0(Sys.getpid(), "testEunomia.sqlite")
+  
+  connectionDetails <-
+    Eunomia::getEunomiaConnectionDetails(databaseFile = databaseFile)
+  withr::defer({
+    unlink(databaseFile, recursive = TRUE, force = TRUE)
+  },
+  testthat::teardown_env())
+  cdmDatabaseSchema <- "main"
+  cohortDatabaseSchema <- "main"
+  vocabularyDatabaseSchema <- cohortDatabaseSchema
+  denominatorCohortTable <- "cohort"
+  tempEmulationSchema <- NULL
+  
+  
+  if (getOption("useAllCovariates", default = FALSE)) {
+    temporalCovariateSettings <- getDefaultCovariateSettings()
+  } else {
+    temporalCovariateSettings <-
+      FeatureExtraction::createTemporalCovariateSettings(
+        useConditionOccurrence = TRUE,
+        useDrugEraStart = TRUE,
+        useProcedureOccurrence = TRUE,
+        useMeasurement = TRUE,
+        useCharlsonIndex = TRUE,
+        temporalStartDays = c(-365,-30, 0, 1, 31),
+        temporalEndDays = c(-31,-1, 0, 30, 365)
+      )
+  }
+} else {
+  denominatorCohortTable <-
+    paste0("ct_",
+           Sys.getpid(),
+           format(Sys.time(), "%s"),
+           sample(101:200, 1))
+}
+
 if (dbms == "postgresql") {
   dbUser <- Sys.getenv("CDM5_POSTGRESQL_USER")
   dbPassword <- Sys.getenv("CDM5_POSTGRESQL_PASSWORD")
@@ -107,9 +146,38 @@ conceptSetExpression$items[[1]]$isExcluded <- FALSE
 conceptSetExpression$items[[1]]$includeDescendants <- TRUE
 conceptSetExpression$items[[1]]$includeMapped <- FALSE
 
+sqlDenominatorCohort <- "DROP TABLE IF EXISTS {@use_cohort_database_schema} ? {@cohort_database_schema.@denominator_cohort_table} : {@denominator_cohort_table};
+                          SELECT CAST(0 as BIGINT) as cohort_definition_id,
+                              op.person_id subject_id,
+                              de2.drug_exposure_start_date cohort_start_date,
+                              op.observation_period_end_date cohort_end_date
+                          INTO {@use_cohort_database_schema} ? {@cohort_database_schema.@denominator_cohort_table} : {@denominator_cohort_table}
+                          FROM @cdm_database_schema.observation_period op
+                          INNER JOIN
+                              (
+                                  SELECT person_id,
+                                          min(drug_exposure_start_date) drug_exposure_start_date
+                                  FROM @cdm_database_schema.drug_exposure de
+                                  INNER JOIN #concept_sets co
+                                  ON de.drug_concept_id = co.concept_id
+                                  GROUP BY person_id
+                              ) de2
+                          ON op.person_id = de2.person_id
+                            AND drug_exposure_start_date >= observation_period_start_date
+                            AND drug_exposure_start_date <= observation_period_end_date;"
+
+# Cleanup
+sql <- "DROP TABLE IF EXISTS @cohort_database_schema.@cohort_table;"
 
 withr::defer(
   {
+    connection <- DatabaseConnector::connect(connectionDetails)
+    DatabaseConnector::renderTranslateExecuteSql(connection,
+                                                 sql,
+                                                 cohort_database_schema = cohortDatabaseSchema,
+                                                 cohort_table = denominatorCohortTable
+    )
+    DatabaseConnector::disconnect(connection)
   },
   testthat::teardown_env()
 )

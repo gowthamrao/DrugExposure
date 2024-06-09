@@ -11,30 +11,26 @@
 #' @template ConceptSetExpression
 #' @template CdmDatabaseSchema
 #' @template VocabularyDatabaseSchema
+#' @template DenominatorCohortDatabaseSchema
+#' @template DenominatorCohortTable
+#' @template DenominatorCohortId
 #' @template TempEmulationSchema
 #' @template RestrictToFirstObservationperiod
-#' @template MaxFollowUpDays
 #' @template PersistenceDays
-#' @template CohortGeneratorSubsetOperators
 #'
 #' @export
 runDrugExposure <- function(connectionDetails = NULL,
                             connection = NULL,
                             conceptSetExpression,
                             cdmDatabaseSchema,
+                            denominatorCohortDatabaseSchema,
+                            denominatorCohortTable,
+                            denominatorCohortId,
                             vocabularyDatabaseSchema = cdmDatabaseSchema,
                             tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
                             restrictToFirstObservationperiod = TRUE,
-                            maxFollowUpDays = 365,
-                            persistenceDays = c(0),
-                            cohortGeneratorSubsetOperators = defaultCohortGeneratorSubsetOperator()) {
-  checkmate::assertIntegerish(
-    x = maxFollowUpDays,
-    lower = 0,
-    upper = 9999,
-    any.missing = FALSE,
-    len = 1
-  )
+                            persistenceDays = c(0)) {
+  
   checkmate::assertIntegerish(
     x = persistenceDays,
     lower = 0,
@@ -42,49 +38,44 @@ runDrugExposure <- function(connectionDetails = NULL,
     min.len = 1,
     unique = TRUE
   )
-
+  
   output <- c()
-
+  
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-
+  
   createCodeSetTableFromConceptSetExpression(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     conceptSetTable = "#concept_sets"
   )
-
+  
   output$codeSets <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
-    sql = "SELECT CONCEPT_ID FROM #concept_sets;",
+    sql = "SELECT c.*
+            FROM #concept_sets co
+            INNER JOIN @cdm_database_schema.concept c
+            ON co.concept_id = c.concept_id;",
     snakeCaseToCamelCase = TRUE,
-    tempEmulationSchema = tempEmulationSchema
+    tempEmulationSchema = tempEmulationSchema,
+    cdm_database_schema = cdmDatabaseSchema
   ) |>
     dplyr::tibble()
-
-  getDenominatorCohort(
-    connection = connection,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    denominatorCohortTable = "#denominator",
-    denominatorCohortId = 1,
-    conceptSetTable = "#concept_sets",
-    restrictToFirstObservationperiod = restrictToFirstObservationperiod,
-    cohortGeneratorSubsetOperators = cohortGeneratorSubsetOperators
-  )
-
+  
   output$denominator <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
-    sql = "SELECT * FROM #denominator
+    sql = "SELECT * FROM @cohort_database_schema.@cohort_table
             WHERE cohort_definition_id = 1;",
     snakeCaseToCamelCase = TRUE,
-    tempEmulationSchema = tempEmulationSchema
+    tempEmulationSchema = tempEmulationSchema,
+    cohort_database_schema = cohortDatabaseSchema,
+    
   ) |>
     dplyr::tibble()
-
+  
   getDrugExposureInDenominatorCohort(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
@@ -96,7 +87,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     denominatorCohortId = 0,
     drugExposureOutputTable = "#drug_exposure"
   )
-
+  
   output$drugExposure <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT * FROM #drug_exposure;",
@@ -104,7 +95,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     tempEmulationSchema = tempEmulationSchema
   ) |>
     dplyr::tibble()
-
+  
   output$cohortDefinitionSet <-
     getNumeratorCohorts(
       connection = connection,
@@ -115,30 +106,28 @@ runDrugExposure <- function(connectionDetails = NULL,
       persistenceDays = persistenceDays,
       baseCohortDefinitionId = 100
     )
-
+  
   numeratorCohorts <- c()
-
+  
   for (i in (1:nrow(output$cohortDefinitionSet))) {
     numeratorCohorts[[i]] <- DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
       sql = paste0(
         "SELECT * FROM ",
-        output$cohortDefinitionSet[i, ]$cohortTableName,
+        output$cohortDefinitionSet[i,]$cohortTableName,
         ";"
       ),
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema
     ) |> dplyr::tibble()
   }
-
+  
   output$numeratorCohorts <- dplyr::bind_rows(numeratorCohorts) |>
-    dplyr::arrange(
-      .data$cohortDefinitionId,
-      .data$subjectId
-    )
-
+    dplyr::arrange(.data$cohortDefinitionId,
+                   .data$subjectId)
+  
   return(output)
-
+  
   # sqlDrugExposureDaySupplyDistribution <- "
   #     with drug_exposures as
   #     (

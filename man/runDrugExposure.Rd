@@ -9,12 +9,13 @@ runDrugExposure(
   connection = NULL,
   conceptSetExpression,
   cdmDatabaseSchema,
+  denominatorCohortDatabaseSchema,
+  denominatorCohortTable,
+  denominatorCohortId,
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   restrictToFirstObservationperiod = TRUE,
-  maxFollowUpDays = 365,
-  persistenceDays = c(0),
-  cohortGeneratorSubsetOperators = defaultCohortGeneratorSubsetOperator()
+  persistenceDays = c(0)
 )
 }
 \arguments{
@@ -37,6 +38,12 @@ CirceR to get concept set expression sql.}
 Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.}
 
+\item{denominatorCohortDatabaseSchema}{The cohort database schema that has the denominator cohort.}
+
+\item{denominatorCohortTable}{The cohort table name that has the denominator cohort.}
+
+\item{denominatorCohortId}{The cohort id of the denominator cohort.}
+
 \item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is
 commonly the same as cdmDatabaseSchema. Note that for
 SQL Server, this should include both the database and
@@ -47,11 +54,7 @@ tables, provide a schema with write privileges where temp tables can be created.
 
 \item{restrictToFirstObservationperiod}{(optional) Default TRUE}
 
-\item{maxFollowUpDays}{(optional, default 365) max number of days to followup the person with continuous observation}
-
 \item{persistenceDays}{(optional) Number of days to check for persistence of drug exposure. Can take a array of days, and report will be generated for all.}
-
-\item{cohortGeneratorSubsetOperators}{(optional) A CohortGenerator Subset operator}
 }
 \description{
 This function takes as a input a Circe compatible concept set expression (as r list object that can be converted to json),

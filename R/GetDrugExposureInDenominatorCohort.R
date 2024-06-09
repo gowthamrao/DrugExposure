@@ -9,10 +9,9 @@
 #' @template CdmDatabaseSchema
 #' @template TempEmulationSchema
 #' @template ConceptSetTable
-#' @param denominatorCohortDatabaseSchema (optional) The cohort database schema
-#' that has the denominator cohort.
-#' @param denominatorCohortTable Denominator cohort table.
-#' @param denominatorCohortId (optional) The cohort id of the denominator cohort. Default 0.
+#' @template DenominatorCohortDatabaseSchema
+#' @template DenominatorCohortTable
+#' @template DenominatorCohortId
 #' @param drugExposureOutputTable the output table
 #'
 getDrugExposureInDenominatorCohort <-
