@@ -15,7 +15,6 @@
 #' @template DenominatorCohortTable
 #' @template DenominatorCohortId
 #' @template TempEmulationSchema
-#' @template RestrictToFirstObservationperiod
 #' @template PersistenceDays
 #'
 #' @export
@@ -28,17 +27,18 @@ runDrugExposure <- function(connectionDetails = NULL,
                             denominatorCohortId,
                             vocabularyDatabaseSchema = cdmDatabaseSchema,
                             tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
-                            restrictToFirstObservationperiod = TRUE,
                             persistenceDays = c(0)) {
   denominatorCohortDatabaseSchemaCohortTable <-
     if (is.null(denominatorCohortDatabaseSchema)) {
       denominatorCohortTable
     } else {
-      paste0(denominatorCohortDatabaseSchema,
-             ".",
-             denominatorCohortTable)
+      paste0(
+        denominatorCohortDatabaseSchema,
+        ".",
+        denominatorCohortTable
+      )
     }
-  
+
   checkmate::assertIntegerish(
     x = persistenceDays,
     lower = 0,
@@ -46,19 +46,19 @@ runDrugExposure <- function(connectionDetails = NULL,
     min.len = 1,
     unique = TRUE
   )
-  
+
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  
+
   createCodeSetTableFromConceptSetExpression(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     conceptSetTable = "#concept_sets"
   )
-  
+
   getDrugExposureInDenominatorCohort(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
@@ -69,9 +69,9 @@ runDrugExposure <- function(connectionDetails = NULL,
     denominatorCohortId = denominatorCohortId,
     drugExposureOutputTable = "#drug_exposure"
   )
-  
+
   output <- c()
-  
+
   output$cohortDefinitionSet <-
     getNumeratorCohorts(
       connection = connection,
@@ -82,7 +82,7 @@ runDrugExposure <- function(connectionDetails = NULL,
       persistenceDays = persistenceDays,
       baseCohortDefinitionId = 100
     )
-  
+
   writeLines("Downloading....")
   output$person <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
@@ -104,7 +104,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     denominator_cohort_table = denominatorCohortDatabaseSchemaCohortTable
   ) |>
     dplyr::tibble()
-  
+
   output$codeSets <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT c.*
@@ -125,7 +125,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     cdm_database_schema = cdmDatabaseSchema
   ) |>
     dplyr::tibble()
-  
+
   output$denominator <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT * FROM @cohort_table
@@ -136,7 +136,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     denominator_cohort_id = denominatorCohortId
   ) |>
     dplyr::tibble()
-  
+
   output$drugExposure <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT * FROM #drug_exposure;",
@@ -144,32 +144,34 @@ runDrugExposure <- function(connectionDetails = NULL,
     tempEmulationSchema = tempEmulationSchema
   ) |>
     dplyr::tibble()
-  
+
   numeratorCohorts <- c()
-  
+
   for (i in (1:nrow(output$cohortDefinitionSet))) {
     numeratorCohorts[[i]] <- DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
       sql = paste0(
         "SELECT * FROM ",
-        output$cohortDefinitionSet[i,]$cohortTableName,
+        output$cohortDefinitionSet[i, ]$cohortTableName,
         ";"
       ),
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema
     ) |> dplyr::tibble()
   }
-  
+
   output$numeratorCohorts <- dplyr::bind_rows(numeratorCohorts) |>
-    dplyr::arrange(.data$cohortDefinitionId,
-                   .data$subjectId)
-  
+    dplyr::arrange(
+      .data$cohortDefinitionId,
+      .data$subjectId
+    )
+
   browser()
-  
-  #to do: denominator cohort ()
-  
+
+  # to do: denominator cohort ()
+
   return(output)
-  
+
   # sqlDrugExposureDaySupplyDistribution <- "
   #     with drug_exposures as
   #     (

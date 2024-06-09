@@ -17,7 +17,6 @@ DrugExposure::runDrugExposure(
   conceptSetExpression = conceptSetExpression$expression,
   cdmDatabaseSchema = cdmSource$cdmDatabaseSchema,
   vocabularyDatabaseSchema = cdmSource$vocabDatabaseSchema,
-  restrictToFirstObservationperiod = TRUE,
   denominatorCohortDatabaseSchema = cdmSource$resultsDatabaseSchema,
   denominatorCohortTable = "cohort",
   denominatorCohortId = 17332,

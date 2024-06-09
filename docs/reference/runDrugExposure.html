@@ -69,12 +69,12 @@ and reports returns a list of objects that maybe utilized in a drug exposure rep
 <span>  connection <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">conceptSetExpression</span>,</span>
 <span>  <span class="va">cdmDatabaseSchema</span>,</span>
+<span>  <span class="va">denominatorCohortDatabaseSchema</span>,</span>
+<span>  <span class="va">denominatorCohortTable</span>,</span>
+<span>  <span class="va">denominatorCohortId</span>,</span>
 <span>  vocabularyDatabaseSchema <span class="op">=</span> <span class="va">cdmDatabaseSchema</span>,</span>
 <span>  tempEmulationSchema <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"sqlRenderTempEmulationSchema"</span><span class="op">)</span>,</span>
-<span>  restrictToFirstObservationperiod <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  maxFollowUpDays <span class="op">=</span> <span class="fl">365</span>,</span>
-<span>  persistenceDays <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
-<span>  cohortGeneratorSubsetOperators <span class="op">=</span> <span class="fu"><a href="defaultCohortGeneratorSubsetOperator.html">defaultCohortGeneratorSubsetOperator</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  persistenceDays <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -107,6 +107,18 @@ Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.</p></dd>
 
 
+<dt>denominatorCohortDatabaseSchema</dt>
+<dd><p>The cohort database schema that has the denominator cohort.</p></dd>
+
+
+<dt>denominatorCohortTable</dt>
+<dd><p>The cohort table name that has the denominator cohort.</p></dd>
+
+
+<dt>denominatorCohortId</dt>
+<dd><p>The cohort id of the denominator cohort.</p></dd>
+
+
 <dt>vocabularyDatabaseSchema</dt>
 <dd><p>Schema name where your OMOP vocabulary data resides. This is
 commonly the same as cdmDatabaseSchema. Note that for
@@ -119,20 +131,8 @@ schema name, for example 'vocabulary.dbo'.</p></dd>
 tables, provide a schema with write privileges where temp tables can be created.</p></dd>
 
 
-<dt>restrictToFirstObservationperiod</dt>
-<dd><p>(optional) Default TRUE</p></dd>
-
-
-<dt>maxFollowUpDays</dt>
-<dd><p>(optional, default 365) max number of days to followup the person with continuous observation</p></dd>
-
-
 <dt>persistenceDays</dt>
 <dd><p>(optional) Number of days to check for persistence of drug exposure. Can take a array of days, and report will be generated for all.</p></dd>
-
-
-<dt>cohortGeneratorSubsetOperators</dt>
-<dd><p>(optional) A CohortGenerator Subset operator</p></dd>
 
 </dl></div>
 

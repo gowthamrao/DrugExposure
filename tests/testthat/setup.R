@@ -33,25 +33,28 @@ skipCdmTests <- FALSE
 
 if (dbms == "sqlite") {
   databaseFile <- paste0(Sys.getpid(), "testEunomia.sqlite")
-  
+
   connectionDetails <-
     Eunomia::getEunomiaConnectionDetails(databaseFile = databaseFile)
-  withr::defer({
-    unlink(databaseFile, recursive = TRUE, force = TRUE)
-  },
-  testthat::teardown_env())
+  withr::defer(
+    {
+      unlink(databaseFile, recursive = TRUE, force = TRUE)
+    },
+    testthat::teardown_env()
+  )
   cdmDatabaseSchema <- "main"
   cohortDatabaseSchema <- "main"
   vocabularyDatabaseSchema <- cohortDatabaseSchema
   denominatorCohortTable <- "cohort"
   tempEmulationSchema <- NULL
-  
 } else {
   denominatorCohortTable <-
-    paste0("ct_",
-           Sys.getpid(),
-           format(Sys.time(), "%s"),
-           sample(101:200, 1))
+    paste0(
+      "ct_",
+      Sys.getpid(),
+      format(Sys.time(), "%s"),
+      sample(101:200, 1)
+    )
 }
 
 if (dbms == "postgresql") {
@@ -158,9 +161,9 @@ withr::defer(
   {
     connection <- DatabaseConnector::connect(connectionDetails)
     DatabaseConnector::renderTranslateExecuteSql(connection,
-                                                 sql,
-                                                 cohort_database_schema = cohortDatabaseSchema,
-                                                 cohort_table = denominatorCohortTable
+      sql,
+      cohort_database_schema = cohortDatabaseSchema,
+      cohort_table = denominatorCohortTable
     )
     DatabaseConnector::disconnect(connection)
   },

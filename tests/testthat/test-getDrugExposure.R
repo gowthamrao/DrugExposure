@@ -1,14 +1,14 @@
 testthat::test_that("Test creating drug exposure using temp tables", {
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
-  
+
   createCodeSetTableFromConceptSetExpression(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     conceptSetTable = "#concept_sets"
   )
-  
+
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sqlDenominatorCohort,
@@ -18,7 +18,7 @@ testthat::test_that("Test creating drug exposure using temp tables", {
     cdm_database_schema = cdmDatabaseSchema,
     denominator_cohort_table = paste0("#", denominatorCohortTable)
   )
-  
+
   getDrugExposureInDenominatorCohort(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
@@ -30,16 +30,18 @@ testthat::test_that("Test creating drug exposure using temp tables", {
     denominatorCohortId = 0,
     drugExposureOutputTable = "#drug_exposure"
   )
-  
+
   cohort <-
-    DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                               sql = "SELECT min(person_id) person
-      FROM #drug_exposure;")
-  
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT min(person_id) person
+      FROM #drug_exposure;"
+    )
+
   testthat::expect_true(object = nrow(cohort) >= 0)
-  
-  
-  
+
+
+
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = "DROP TABLE IF EXISTS #drug_exposure;
