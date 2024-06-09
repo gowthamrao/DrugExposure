@@ -47,8 +47,6 @@ runDrugExposure <- function(connectionDetails = NULL,
     unique = TRUE
   )
   
-  output <- c()
-  
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
@@ -61,10 +59,65 @@ runDrugExposure <- function(connectionDetails = NULL,
     conceptSetTable = "#concept_sets"
   )
   
+  getDrugExposureInDenominatorCohort(
+    connection = connection,
+    conceptSetExpression = conceptSetExpression,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    conceptSetTable = "#concept_sets",
+    denominatorCohortTable = denominatorCohortDatabaseSchemaCohortTable,
+    denominatorCohortId = denominatorCohortId,
+    drugExposureOutputTable = "#drug_exposure"
+  )
+  
+  output <- c()
+  
+  output$cohortDefinitionSet <-
+    getNumeratorCohorts(
+      connection = connection,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
+      numeratorCohortTableBaseName = "#numerator",
+      drugExposureTable = "#drug_exposure",
+      persistenceDays = persistenceDays,
+      baseCohortDefinitionId = 100
+    )
+  
+  writeLines("Downloading....")
+  output$person <- DatabaseConnector::renderTranslateQuerySql(
+    connection = connection,
+    sql = "
+            SELECT person_id,
+                    gender_concept_id,
+                    race_concept_id,
+                    ethnicity_concept_id,
+                    year_of_birth
+            FROM @cdm_database_schema.person p
+            INNER JOIN (
+                        SELECT DISTINCT subject_id
+                        FROM @denominator_cohort_table
+                      ) d
+            ON p.person_id = d.subject_id;",
+    cdm_database_schema = cdmDatabaseSchema,
+    snakeCaseToCamelCase = TRUE,
+    tempEmulationSchema = tempEmulationSchema,
+    denominator_cohort_table = denominatorCohortDatabaseSchemaCohortTable
+  ) |>
+    dplyr::tibble()
+  
   output$codeSets <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT c.*
-            FROM #concept_sets co
+            FROM (
+                    SELECT concept_id
+                    FROM #concept_sets
+                    UNION
+                    SELECT drug_concept_id
+                    FROM #drug_exposure
+                    UNION
+                    SELECT drug_source_concept_id
+                    FROM #drug_exposure
+                  ) co
             INNER JOIN @cdm_database_schema.concept c
             ON co.concept_id = c.concept_id;",
     snakeCaseToCamelCase = TRUE,
@@ -84,17 +137,6 @@ runDrugExposure <- function(connectionDetails = NULL,
   ) |>
     dplyr::tibble()
   
-  getDrugExposureInDenominatorCohort(
-    connection = connection,
-    conceptSetExpression = conceptSetExpression,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    conceptSetTable = "#concept_sets",
-    denominatorCohortTable = denominatorCohortDatabaseSchemaCohortTable,
-    denominatorCohortId = denominatorCohortId,
-    drugExposureOutputTable = "#drug_exposure"
-  )
-  
   output$drugExposure <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT * FROM #drug_exposure;",
@@ -103,17 +145,6 @@ runDrugExposure <- function(connectionDetails = NULL,
   ) |>
     dplyr::tibble()
   
-  output$cohortDefinitionSet <-
-    getNumeratorCohorts(
-      connection = connection,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
-      numeratorCohortTableBaseName = "#numerator",
-      drugExposureTable = "#drug_exposure",
-      persistenceDays = persistenceDays,
-      baseCohortDefinitionId = 100
-    )
-  
   numeratorCohorts <- c()
   
   for (i in (1:nrow(output$cohortDefinitionSet))) {
@@ -121,7 +152,7 @@ runDrugExposure <- function(connectionDetails = NULL,
       connection = connection,
       sql = paste0(
         "SELECT * FROM ",
-        output$cohortDefinitionSet[i, ]$cohortTableName,
+        output$cohortDefinitionSet[i,]$cohortTableName,
         ";"
       ),
       snakeCaseToCamelCase = TRUE,
@@ -132,6 +163,10 @@ runDrugExposure <- function(connectionDetails = NULL,
   output$numeratorCohorts <- dplyr::bind_rows(numeratorCohorts) |>
     dplyr::arrange(.data$cohortDefinitionId,
                    .data$subjectId)
+  
+  browser()
+  
+  #to do: denominator cohort ()
   
   return(output)
   

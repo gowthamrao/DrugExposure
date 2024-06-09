@@ -12,7 +12,6 @@ connectionDetails <-
 cdmSource <-
   OhdsiHelpers::getCdmSource(cdmSources = cdmSources, database = "truven_mdcd")
 
-debug(DrugExposure::runDrugExposure)
 DrugExposure::runDrugExposure(
   connectionDetails = connectionDetails,
   conceptSetExpression = conceptSetExpression$expression,

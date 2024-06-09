@@ -2,7 +2,7 @@ testthat::test_that("Test creating numerator cohorts using temp tables", {
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
   
-  DrugExposure:::createCodeSetTableFromConceptSetExpression(
+  createCodeSetTableFromConceptSetExpression(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
@@ -19,7 +19,7 @@ testthat::test_that("Test creating numerator cohorts using temp tables", {
     denominator_cohort_table = paste0("#", denominatorCohortTable)
   )
   
-  DrugExposure:::getDrugExposureInDenominatorCohort(
+  getDrugExposureInDenominatorCohort(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -30,9 +30,9 @@ testthat::test_that("Test creating numerator cohorts using temp tables", {
     denominatorCohortId = 0,
     drugExposureOutputTable = "#drug_exposure"
   )
-
+  
   cohortDefinitionSet <-
-    DrugExposure:::getNumeratorCohorts(
+    getNumeratorCohorts(
       connection = connection,
       cdmDatabaseSchema = cdmDatabaseSchema,
       tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
@@ -41,13 +41,11 @@ testthat::test_that("Test creating numerator cohorts using temp tables", {
       persistenceDays = c(0, 100, 1000),
       baseCohortDefinitionId = 100
     )
-
+  
   cohort <-
-    DatabaseConnector::renderTranslateQuerySql(
-      connection = connection,
-      sql = "SELECT min(cohort_definition_id) cohort_definition_id
-             FROM #numerator_101"
-    )
+    DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                               sql = "SELECT min(cohort_definition_id) cohort_definition_id
+             FROM #numerator_101")
   testthat::expect_true(object = nrow(cohort) >= 0)
   testthat::expect_true(object = nrow(cohortDefinitionSet) > 0)
   
@@ -59,6 +57,6 @@ testthat::test_that("Test creating numerator cohorts using temp tables", {
            DROP TABLE IF EXISTS @denominator_cohort_table;",
     denominator_cohort_table = paste0("#", denominatorCohortTable)
   )
-
+  
   DatabaseConnector::disconnect(connection = connection)
 })

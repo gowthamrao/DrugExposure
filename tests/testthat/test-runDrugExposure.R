@@ -3,7 +3,7 @@ testthat::test_that("Test run drug exposure", {
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
   
-  DrugExposure:::createCodeSetTableFromConceptSetExpression(
+  createCodeSetTableFromConceptSetExpression(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
