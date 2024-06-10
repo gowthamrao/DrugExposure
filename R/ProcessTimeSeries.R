@@ -33,13 +33,13 @@ processTimeSeries <-
       any.missing = FALSE,
       min.chars = 1
     )
-    checkmate::assertChoice(timeRepresentations,
+    checkmate::assertSubset(timeRepresentations,
                             choices = c('Day', 'Month', 'Quarter', 'Year'))
+    
     if (!is.null(weight)) {
-      checkmate::assertCharacter(weight, len = 1, min.chars = 1)
-      checkmate::assertColumnExists(df, weight)
+      checkmate::assertSubset(weight,
+                              choices = colnames(df))
     }
-    checkmate::assertColumnExists(df, dateField)
     
     if (!is.null(weight)) {
       df <- df |>
@@ -63,40 +63,35 @@ processTimeSeries <-
     for (timeRep in timeRepresentations) {
       # Data handling and conversion to regular tsibble
       if (timeRep == 'Day') {
-        processedData <- data |>
-          dplyr::select(dateField, weight) |>
+        processedData <- df |>
           dplyr::rename(timeGroup = dateField)
       } else if (timeRep == 'Month') {
-        processedData <- data |>
-          dplyr::select(dateField) |>
+        processedData <- df |>
           dplyr::mutate(timeGroup = tsibble::yearmonth(dateField)) |>
-          dplyr::select(dateField, weight)
+          dplyr::select(timeGroup, weight)
       } else if (timeRep == 'Quarter') {
-        processedData <- data |>
-          dplyr::select(dateField) |>
+        processedData <- df |>
           dplyr::mutate(timeGroup = tsibble::yearquarter(dateField)) |>
-          dplyr::select(dateField, weight)
+          dplyr::select(timeGroup, weight)
       } else if (timeRep == 'Week') {
-        processedData <- data |>
-          dplyr::select(dateField) |>
+        processedData <- df |>
           dplyr::mutate(timeGroup = tsibble::yearweek(dateField)) |>
-          dplyr::select(timeGroup)
+          dplyr::select(timeGroup, weight)
       } else if (timeRep == 'Year') {
-        processedData <- data |>
-          dplyr::select(dateField) |>
+        processedData <- df |>
           dplyr::mutate(timeGroup = format(dateField, "%Y") |> as.integer()) |>
-          dplyr::select(dateField, weight)
+          dplyr::select(timeGroup, weight)
       }
       
       processedData <- processedData |>
         dplyr::group_by(timeGroup) |>
-        dplyr::summarise(weight = dplyr::sum(weight)) |>
+        dplyr::summarise(weight = sum(weight)) |>
         tsibble::as_tsibble(index = timeGroup) |>
         tsibble::fill_gaps(weight = 0)
       
       # Calculate model
       model <- processedData |>
-        fabletools::model(feasts::STL(count ~ season(window = 'periodic')))
+        fabletools::model(feasts::STL(weight ~ season(window = 'periodic')))
       
       # Extract components and plot
       components <- model |> fabletools::components()
