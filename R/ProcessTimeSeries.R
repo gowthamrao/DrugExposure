@@ -24,12 +24,17 @@ processTimeSeries <-
            timeRepresentations = c('Day', 'Month', 'Quarter', 'Year'),
            dateField = 'cohortStartDate',
            weight = NULL) {
-    
     # Check input validity
     checkmate::assertDataFrame(df)
     checkmate::assertCharacter(dateField, len = 1, min.chars = 1)
-    checkmate::assertCharacter(timeRepresentations, min.len = 1, any.missing = FALSE, min.chars = 1)
-    checkmate::assertChoice(timeRepresentations, choices = c('Day', 'Month', 'Quarter', 'Year'))
+    checkmate::assertCharacter(
+      timeRepresentations,
+      min.len = 1,
+      any.missing = FALSE,
+      min.chars = 1
+    )
+    checkmate::assertChoice(timeRepresentations,
+                            choices = c('Day', 'Month', 'Quarter', 'Year'))
     if (!is.null(weight)) {
       checkmate::assertCharacter(weight, len = 1, min.chars = 1)
       checkmate::assertColumnExists(df, weight)
