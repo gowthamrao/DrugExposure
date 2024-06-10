@@ -32,7 +32,7 @@ getNumeratorCohorts <- function(connection = NULL,
     )
 
   cohortDefinitionSet <- c()
-
+  writeLines("Creating numerator cohorts....")
   for (i in (1:length(persistenceDays))) {
     cohortDefinitionId <- baseCohortDefinitionId + i
 

@@ -32,13 +32,11 @@ runDrugExposure <- function(connectionDetails = NULL,
     if (is.null(denominatorCohortDatabaseSchema)) {
       denominatorCohortTable
     } else {
-      paste0(
-        denominatorCohortDatabaseSchema,
-        ".",
-        denominatorCohortTable
-      )
+      paste0(denominatorCohortDatabaseSchema,
+             ".",
+             denominatorCohortTable)
     }
-
+  
   checkmate::assertIntegerish(
     x = persistenceDays,
     lower = 0,
@@ -46,19 +44,20 @@ runDrugExposure <- function(connectionDetails = NULL,
     min.len = 1,
     unique = TRUE
   )
-
+  
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-
+  
+  writeLines("Running SQL...")
   createCodeSetTableFromConceptSetExpression(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     conceptSetTable = "#concept_sets"
   )
-
+  
   getDrugExposureInDenominatorCohort(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
@@ -69,9 +68,9 @@ runDrugExposure <- function(connectionDetails = NULL,
     denominatorCohortId = denominatorCohortId,
     drugExposureOutputTable = "#drug_exposure"
   )
-
+  
   output <- c()
-
+  
   output$cohortDefinitionSet <-
     getNumeratorCohorts(
       connection = connection,
@@ -81,8 +80,9 @@ runDrugExposure <- function(connectionDetails = NULL,
       drugExposureTable = "#drug_exposure",
       persistenceDays = persistenceDays,
       baseCohortDefinitionId = 100
-    )
-
+    ) |> 
+    dplyr::tibble()
+  
   writeLines("Downloading....")
   output$person <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
@@ -104,19 +104,32 @@ runDrugExposure <- function(connectionDetails = NULL,
     denominator_cohort_table = denominatorCohortDatabaseSchemaCohortTable
   ) |>
     dplyr::tibble()
-
+  
   output$codeSets <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT c.*
             FROM (
-                    SELECT concept_id
-                    FROM #concept_sets
-                    UNION
-                    SELECT drug_concept_id
-                    FROM #drug_exposure
-                    UNION
-                    SELECT drug_source_concept_id
-                    FROM #drug_exposure
+                    SELECT DISTINCT concept_id
+                    FROM
+                    (
+                      SELECT concept_id
+                      FROM #concept_sets
+                      UNION ALL
+                      SELECT drug_concept_id
+                      FROM #drug_exposure
+                      UNION ALL
+                      SELECT drug_source_concept_id
+                      FROM #drug_exposure
+                      UNION ALL
+                      SELECT DISTINCT gender_concept_id
+                      FROM @cdm_database_schema.person
+                      UNION ALL
+                      SELECT DISTINCT race_concept_id
+                      FROM @cdm_database_schema.person
+                      UNION ALL
+                      SELECT DISTINCT ethnicity_concept_id
+                      FROM @cdm_database_schema.person
+                    ) combined_concepts
                   ) co
             INNER JOIN @cdm_database_schema.concept c
             ON co.concept_id = c.concept_id;",
@@ -125,7 +138,27 @@ runDrugExposure <- function(connectionDetails = NULL,
     cdm_database_schema = cdmDatabaseSchema
   ) |>
     dplyr::tibble()
-
+  
+  output$datesObservered <-
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = " SELECT  c.cohort_start_date,
+                    COUNT(DISTINCT o.person_id) AS num_people
+            FROM @denominator_cohort_table c
+            JOIN @cdm_database_schema.observation_period o
+            ON c.subject_id = o.person_id
+            WHERE o.observation_period_start_date <= c.cohort_start_date AND
+                  o.observation_period_end_date >= c.cohort_start_date
+            GROUP BY c.cohort_start_date
+            ORDER BY c.cohort_start_date;
+    ",
+      denominator_cohort_table = denominatorCohortDatabaseSchemaCohortTable,
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = tempEmulationSchema,
+      cdm_database_schema = cdmDatabaseSchema
+    ) |> 
+    dplyr::tibble()
+  
   output$denominator <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT * FROM @cohort_table
@@ -136,42 +169,46 @@ runDrugExposure <- function(connectionDetails = NULL,
     denominator_cohort_id = denominatorCohortId
   ) |>
     dplyr::tibble()
-
-  output$drugExposure <- DatabaseConnector::renderTranslateQuerySql(
-    connection = connection,
-    sql = "SELECT * FROM #drug_exposure;",
-    snakeCaseToCamelCase = TRUE,
-    tempEmulationSchema = tempEmulationSchema
-  ) |>
-    dplyr::tibble()
-
+  
+  # output$drugExposure <- DatabaseConnector::renderTranslateQuerySql(
+  #   connection = connection,
+  #   sql = "SELECT * FROM #drug_exposure;",
+  #   snakeCaseToCamelCase = TRUE,
+  #   tempEmulationSchema = tempEmulationSchema
+  # ) |>
+  #   dplyr::tibble()
+  
   numeratorCohorts <- c()
-
+  
   for (i in (1:nrow(output$cohortDefinitionSet))) {
     numeratorCohorts[[i]] <- DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
       sql = paste0(
         "SELECT * FROM ",
-        output$cohortDefinitionSet[i, ]$cohortTableName,
+        output$cohortDefinitionSet[i,]$cohortTableName,
         ";"
       ),
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema
     ) |> dplyr::tibble()
   }
-
+  
   output$numeratorCohorts <- dplyr::bind_rows(numeratorCohorts) |>
-    dplyr::arrange(
-      .data$cohortDefinitionId,
-      .data$subjectId
-    )
-
+    dplyr::arrange(.data$cohortDefinitionId,
+                   .data$subjectId)
+  
   browser()
-
+  
+  output$denominatorTsibble<- output$denominator |> 
+    dplyr::select(cohortStartDate) |> 
+    dplyr::mutate(cohortStartDate = as.Date(cohortStartDate)) |> 
+    tsibble::as_tibble(index = cohortStartDate, key = NULL) |> 
+    tsibble::index_by(week = ~ floor_date(.index, "week")) 
+  
   # to do: denominator cohort ()
-
+  
   return(output)
-
+  
   # sqlDrugExposureDaySupplyDistribution <- "
   #     with drug_exposures as
   #     (

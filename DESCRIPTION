@@ -15,11 +15,15 @@ Depends:
 Imports:
     checkmate,
     CirceR,
+    clock,
     CohortGenerator,
     dplyr,
+    fable,
+    feasts,
     lifecycle,
     rlang,
-    SqlRender
+    SqlRender,
+    tsibble
 Suggests:
   Eunomia,
   remotes,

@@ -38,6 +38,7 @@ createCodeSetTableFromConceptSetExpression <-
       " ) f;"
     )
 
+    writeLines("Creating codeset table....")
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = conceptSetSql,

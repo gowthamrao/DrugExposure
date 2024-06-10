@@ -51,6 +51,7 @@ getDrugExposureInDenominatorCohort <-
         )
     }
 
+    writeLines("Creating drug exposure....")
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sqlDrugExposureInFirstExposuresObservationPeriod,

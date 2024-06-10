@@ -3,7 +3,7 @@ testthat::test_that("Test run drug exposure", {
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
 
-  createCodeSetTableFromConceptSetExpression(
+  DrugExposure:::createCodeSetTableFromConceptSetExpression(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
@@ -23,7 +23,7 @@ testthat::test_that("Test run drug exposure", {
 
   # now there should be a permanent cohort table that is cohortDatabaseSchema.denominatorCohortTable
 
-  output <- runDrugExposure(
+  output <- DrugExposure:::runDrugExposure(
     connectionDetails = connectionDetails,
     conceptSetExpression = conceptSetExpression,
     cdmDatabaseSchema = cdmDatabaseSchema,
