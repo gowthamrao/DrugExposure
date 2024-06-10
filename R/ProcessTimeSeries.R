@@ -21,7 +21,7 @@
 #' @export
 processTimeSeries <-
   function(df,
-           timeRepresentations = c('Day', 'Month', 'Quarter', 'Year'),
+           timeRepresentations = c('Day', 'Week', 'Month', 'Quarter', 'Year'),
            dateField = 'cohortStartDate',
            weight = NULL) {
     # Check input validity
@@ -34,7 +34,7 @@ processTimeSeries <-
       min.chars = 1
     )
     checkmate::assertSubset(timeRepresentations,
-                            choices = c('Day', 'Month', 'Quarter', 'Year'))
+                            choices = c('Day', 'Week', 'Month', 'Quarter', 'Year'))
     
     if (!is.null(weight)) {
       checkmate::assertSubset(weight,

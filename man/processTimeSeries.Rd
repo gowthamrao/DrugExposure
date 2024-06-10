@@ -6,7 +6,7 @@
 \usage{
 processTimeSeries(
   df,
-  timeRepresentations = c("Day", "Month", "Quarter", "Year"),
+  timeRepresentations = c("Day", "Week", "Month", "Quarter", "Year"),
   dateField = "cohortStartDate",
   weight = NULL
 )
