@@ -23,6 +23,7 @@ INNER JOIN @denominator_cohort_table dc
 		AND dc.cohort_start_date <= de.drug_exposure_start_date
 		AND dc.cohort_end_date >= de.drug_exposure_start_date
 WHERE drug_concept_id > 0
+  AND dc.cohort_definition_id = @denominator_cohort_id
 ORDER BY drug_exposure_id,
         person_id,
         drug_exposure_start_date,
@@ -48,6 +49,7 @@ INNER JOIN @denominator_cohort_table dc
 		AND dc.cohort_start_date <= de.drug_exposure_start_date
 		AND dc.cohort_end_date >= de.drug_exposure_start_date
 WHERE drug_source_concept_id > 0
+  AND dc.cohort_definition_id = @denominator_cohort_id
 EXCEPT
 SELECT 
     drug_exposure_id,

@@ -15,7 +15,7 @@
 #' @template DenominatorCohortTable
 #' @template DenominatorCohortId
 #' @template TempEmulationSchema
-#' @template PersistenceDays
+#' @template GapDays
 #'
 #' @export
 runDrugExposure <- function(connectionDetails = NULL,
@@ -27,7 +27,7 @@ runDrugExposure <- function(connectionDetails = NULL,
                             denominatorCohortId,
                             vocabularyDatabaseSchema = cdmDatabaseSchema,
                             tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
-                            persistenceDays = c(0)) {
+                            gapDays = c(0)) {
   denominatorCohortDatabaseSchemaCohortTable <-
     if (is.null(denominatorCohortDatabaseSchema)) {
       denominatorCohortTable
@@ -38,7 +38,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     }
   
   checkmate::assertIntegerish(
-    x = persistenceDays,
+    x = gapDays,
     lower = 0,
     any.missing = FALSE,
     min.len = 1,
@@ -71,6 +71,7 @@ runDrugExposure <- function(connectionDetails = NULL,
   
   output <- c()
   
+  ## cohortDefinitionSet----
   output$cohortDefinitionSet <-
     getNumeratorCohorts(
       connection = connection,
@@ -78,10 +79,11 @@ runDrugExposure <- function(connectionDetails = NULL,
       tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
       numeratorCohortTableBaseName = "#numerator",
       drugExposureTable = "#drug_exposure",
-      persistenceDays = persistenceDays,
+      gapDays = gapDays,
       baseCohortDefinitionId = 100
-    ) |> 
-    dplyr::tibble()
+    ) |>
+    dplyr::tibble() |>
+    dplyr::mutate(cohortName = paste0("Numerator - ", cohortName))
   
   writeLines("Downloading....")
   output$person <- DatabaseConnector::renderTranslateQuerySql(
@@ -139,26 +141,121 @@ runDrugExposure <- function(connectionDetails = NULL,
   ) |>
     dplyr::tibble()
   
-  output$datesObservered <-
+  
+  ##persons in the observation period on cohort_start_date----
+  ### by days----
+  output$personsObservedDays <-
     DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
       sql = " SELECT  c.cohort_start_date,
+                    COUNT(DISTINCT o.person_id) AS num_people
+              FROM @denominator_cohort_table c
+              JOIN @cdm_database_schema.observation_period o
+              ON c.subject_id = o.person_id
+              WHERE o.observation_period_start_date <= c.cohort_start_date AND
+                    o.observation_period_end_date >= c.cohort_start_date
+              GROUP BY c.cohort_start_date;
+    ",
+      denominator_cohort_table = denominatorCohortDatabaseSchemaCohortTable,
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = tempEmulationSchema,
+      cdm_database_schema = cdmDatabaseSchema
+    ) |>
+    dplyr::tibble()
+  
+  output$personsObservedDaysSts <-
+    processTimeSeries(
+      df = output$personsObservedDays,
+      dateField = "cohortStartDate",
+      weight = "numPeople",
+      timeRepresentations = "Day"
+    )
+  
+  ### by month----
+  output$personsObservedMonth <-
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = " SELECT  DATEFROMPARTS(YEAR(c.cohort_start_date), MONTH(c.cohort_start_date), 1) cohort_start_date,
                     COUNT(DISTINCT o.person_id) AS num_people
             FROM @denominator_cohort_table c
             JOIN @cdm_database_schema.observation_period o
             ON c.subject_id = o.person_id
             WHERE o.observation_period_start_date <= c.cohort_start_date AND
                   o.observation_period_end_date >= c.cohort_start_date
-            GROUP BY c.cohort_start_date
-            ORDER BY c.cohort_start_date;
+            GROUP BY DATEFROMPARTS(YEAR(c.cohort_start_date), MONTH(c.cohort_start_date), 1);
     ",
       denominator_cohort_table = denominatorCohortDatabaseSchemaCohortTable,
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema,
       cdm_database_schema = cdmDatabaseSchema
-    ) |> 
+    ) |>
     dplyr::tibble()
   
+  output$personsObservedMonthSts <-
+    processTimeSeries(
+      df = output$personsObservedMonth,
+      dateField = "cohortStartDate",
+      weight = "numPeople",
+      timeRepresentations = "Month"
+    )
+  
+  ### by quarter----
+  output$personsObservedQuarter <-
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = " SELECT  DATEFROMPARTS(YEAR(c.cohort_start_date), 1 + 3 * ((MONTH(c.cohort_start_date) - 1) / 3), 1) cohort_start_date,
+                    COUNT(DISTINCT o.person_id) AS num_people
+            FROM @denominator_cohort_table c
+            JOIN @cdm_database_schema.observation_period o
+            ON c.subject_id = o.person_id
+            WHERE o.observation_period_start_date <= c.cohort_start_date AND
+                  o.observation_period_end_date >= c.cohort_start_date
+            GROUP BY DATEFROMPARTS(YEAR(c.cohort_start_date), 1 + 3 * ((MONTH(c.cohort_start_date) - 1) / 3), 1);
+    ",
+      denominator_cohort_table = denominatorCohortDatabaseSchemaCohortTable,
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = tempEmulationSchema,
+      cdm_database_schema = cdmDatabaseSchema
+    ) |>
+    dplyr::tibble()
+  
+  output$personsObservedQuarterSts <-
+    processTimeSeries(
+      df = output$personsObservedQuarter,
+      dateField = "cohortStartDate",
+      weight = "numPeople",
+      timeRepresentations = "Quarter"
+    )
+  
+  ### by year----
+  output$personsObservedYear <-
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = " SELECT  DATEFROMPARTS(YEAR(c.cohort_start_date), 1 + 3 * ((MONTH(c.cohort_start_date) - 1) / 3), 1) cohort_start_date,
+                    COUNT(DISTINCT o.person_id) AS num_people
+            FROM @denominator_cohort_table c
+            JOIN @cdm_database_schema.observation_period o
+            ON c.subject_id = o.person_id
+            WHERE o.observation_period_start_date <= c.cohort_start_date AND
+                  o.observation_period_end_date >= c.cohort_start_date
+            GROUP BY DATEFROMPARTS(YEAR(c.cohort_start_date), 1 + 3 * ((MONTH(c.cohort_start_date) - 1) / 3), 1);
+    ",
+      denominator_cohort_table = denominatorCohortDatabaseSchemaCohortTable,
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = tempEmulationSchema,
+      cdm_database_schema = cdmDatabaseSchema
+    ) |>
+    dplyr::tibble()
+  
+  output$personsObservedYearSts <-
+    processTimeSeries(
+      df = output$personsObservedYear,
+      dateField = "cohortStartDate",
+      weight = "numPeople",
+      timeRepresentations = "Year"
+    )
+  
+  ## denominator----
   output$denominator <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT * FROM @cohort_table
@@ -170,42 +267,113 @@ runDrugExposure <- function(connectionDetails = NULL,
   ) |>
     dplyr::tibble()
   
-  # output$drugExposure <- DatabaseConnector::renderTranslateQuerySql(
-  #   connection = connection,
-  #   sql = "SELECT * FROM #drug_exposure;",
-  #   snakeCaseToCamelCase = TRUE,
-  #   tempEmulationSchema = tempEmulationSchema
-  # ) |>
-  #   dplyr::tibble()
+  output$denominatorSts <-
+    processTimeSeries(df = output$denominator, dateField = "cohortStartDate")
+  
+  output$drugExposure <- DatabaseConnector::renderTranslateQuerySql(
+    connection = connection,
+    sql = "SELECT * FROM #drug_exposure;",
+    snakeCaseToCamelCase = TRUE,
+    tempEmulationSchema = tempEmulationSchema
+  ) |>
+    dplyr::tibble()
+  
+  sqlDrugExposureDays <- "
+                      select person_id,
+                          drug_exposure_start_date,
+                        	SUM(CASE WHEN DATEADD(day, DAYS_SUPPLY, DRUG_EXPOSURE_START_DATE) > cohort_end_date THEN
+                        	    DATEDIFF(day, DRUG_EXPOSURE_START_DATE, DRUG_EXPOSURE_END_DATE) + 1 ELSE days_supply END
+                        	    ) days_supply
+                      from @denominator_cohort_table c
+                      inner join #drug_exposure de
+                      on c.subject_id = de.person_id
+                      	and c.cohort_start_date <= drug_exposure_start_date
+                      	and c.cohort_end_Date >= drug_exposure_start_date
+                      WHERE c.cohort_definition_id = @denominator_cohort_id
+                        AND drug_exposure_start_date >= cohort_start_date
+                        AND drug_exposure_end_date <= cohort_end_date
+                      GROUP BY person_id, drug_exposure_start_date
+                      ORDER BY person_id, drug_exposure_start_date;
+                      "
+  output$drugExposureDays <-
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = sqlDrugExposureDays,
+      denominator_cohort_table = denominatorCohortDatabaseSchemaCohortTable,
+      denominator_cohort_id = denominatorCohortId,
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = tempEmulationSchema
+    )
   
   numeratorCohorts <- c()
   
   for (i in (1:nrow(output$cohortDefinitionSet))) {
-    numeratorCohorts[[i]] <- DatabaseConnector::renderTranslateQuerySql(
+    x1 <- DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
       sql = paste0(
         "SELECT * FROM ",
-        output$cohortDefinitionSet[i,]$cohortTableName,
+        output$cohortDefinitionSet[i, ]$cohortTableName,
         ";"
       ),
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema
     ) |> dplyr::tibble()
+    
+    x2 <- DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = paste0(
+        "SELECT 1000 + cohort_definition_id AS cohort_definition_id,
+                subject_id,
+                min(cohort_start_date) cohort_start_date,
+                min(cohort_end_date) cohort_end_date
+          FROM ",
+        output$cohortDefinitionSet[i, ]$cohortTableName,
+        " GROUP BY cohort_definition_id, subject_id;"
+      ),
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = tempEmulationSchema
+    ) |> dplyr::tibble()
+    
+    numeratorCohorts[[i]] <- dplyr::bind_rows(x1, x2)
   }
   
-  output$numeratorCohorts <- dplyr::bind_rows(numeratorCohorts) |>
-    dplyr::arrange(.data$cohortDefinitionId,
-                   .data$subjectId)
+  output$cohortDefinitionSet <- dplyr::bind_rows(
+    output$cohortDefinitionSet,
+    output$cohortDefinitionSet |>
+      dplyr::mutate(
+        cohortId = (1000 + cohortId),
+        cohortName = paste0(cohortName,
+                            " earliest event")
+      ),
+    dplyr::tibble(
+      cohortId = denominatorCohortId,
+      cohortName = 'Denominator',
+      persistenceDay = 0,
+      cohortTableName = if (!is.null(denominatorCohortDatabaseSchema)) {
+        paste0(denominatorCohortDatabaseSchema,
+               ".",
+               denominatorCohortTable)
+      } else {
+        denominatorCohortTable
+      }
+    )
+  )
   
-  browser()
+  output$numeratorCohorts <- dplyr::bind_rows(numeratorCohorts)
   
-  output$denominatorTsibble<- output$denominator |> 
-    dplyr::select(cohortStartDate) |> 
-    dplyr::mutate(cohortStartDate = as.Date(cohortStartDate)) |> 
-    tsibble::as_tibble(index = cohortStartDate, key = NULL) |> 
-    tsibble::index_by(week = ~ floor_date(.index, "week")) 
-  
-  # to do: denominator cohort ()
+  output$cohortDays <- dplyr::bind_rows(output$numeratorCohorts,
+                                        output$denominator) |>
+    dplyr::group_by(cohortDefinitionId) |>
+    dplyr::summarize(
+      persons = n_distinct(subjectId),
+      events = n(),
+      days = as.double(sum(cohortEndDate - cohortStartDate + 1))
+    ) |>
+    dplyr::rename(cohortId = cohortDefinitionId) |>
+    dplyr::inner_join(output$cohortDefinitionSet |>
+                        dplyr::select(cohortId,
+                                      cohortName),
+                      by = "cohortId")
   
   return(output)
   

@@ -2,14 +2,14 @@ testthat::test_that("Test run drug exposure", {
   # first create a denominator cohort table that is a permanent table in cohort databaseschema
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
-
+  
   DrugExposure:::createCodeSetTableFromConceptSetExpression(
     connection = connection,
     conceptSetExpression = conceptSetExpression,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     conceptSetTable = "#concept_sets"
   )
-
+  
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sqlDenominatorCohort,
@@ -20,9 +20,9 @@ testthat::test_that("Test run drug exposure", {
     denominator_cohort_table = denominatorCohortTable
   )
   DatabaseConnector::disconnect(connection = connection)
-
+  
   # now there should be a permanent cohort table that is cohortDatabaseSchema.denominatorCohortTable
-
+  
   output <- DrugExposure:::runDrugExposure(
     connectionDetails = connectionDetails,
     conceptSetExpression = conceptSetExpression,
@@ -31,11 +31,11 @@ testthat::test_that("Test run drug exposure", {
     denominatorCohortDatabaseSchema = cohortDatabaseSchema,
     denominatorCohortId = 0,
     denominatorCohortTable = denominatorCohortTable,
-    persistenceDays = c(0, 100, 1000)
+    gapDays = c(0, 100, 1000)
   )
-
+  
   testthat::expect_gte(object = length(output), expected = 0)
-
+  
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
   DatabaseConnector::renderTranslateExecuteSql(

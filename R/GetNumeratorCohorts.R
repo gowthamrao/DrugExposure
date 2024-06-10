@@ -7,20 +7,20 @@
 #' @template CdmDatabaseSchema
 #' @template TempEmulationSchema
 #' @param numeratorCohortTableBaseName The name of the output table
-#' @param persistenceDays Number of days to check for persistence of drug exposure.
+#' @template GapDays
 #' @param drugExposureTable The name of the table with "#drug_exposure". Should be a temp table.
-#' @param baseCohortDefinitionId The minimum cohortId to create cohorts for all persistenceDays
+#' @param baseCohortDefinitionId The minimum cohortId to create cohorts for all gapDays
 getNumeratorCohorts <- function(connection = NULL,
                                 cdmDatabaseSchema,
                                 tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
                                 numeratorCohortTableBaseName = "#numerator",
                                 drugExposureTable = "#drug_exposure",
-                                persistenceDays = c(0),
+                                gapDays = c(0),
                                 baseCohortDefinitionId = 100) {
-  persistenceDays <- persistenceDays |>
+  gapDays <- gapDays |>
     unique() |>
     sort()
-
+  
   sqlNonOverlappingEraWithPad <-
     SqlRender::readSql(
       system.file(
@@ -30,12 +30,12 @@ getNumeratorCohorts <- function(connection = NULL,
         package = utils::packageName()
       )
     )
-
+  
   cohortDefinitionSet <- c()
   writeLines("Creating numerator cohorts....")
-  for (i in (1:length(persistenceDays))) {
+  for (i in (1:length(gapDays))) {
     cohortDefinitionId <- baseCohortDefinitionId + i
-
+    
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sqlNonOverlappingEraWithPad,
@@ -47,20 +47,20 @@ getNumeratorCohorts <- function(connection = NULL,
       cohort_definition_id_not_null = !is.null(cohortDefinitionId),
       person_id = "person_id",
       cdm_database_schema = cdmDatabaseSchema,
-      era_constructor_pad = persistenceDays[[i]],
+      era_constructor_pad = gapDays[[i]],
       tempEmulationSchema = tempEmulationSchema
     )
-
+    
     cohortDefinitionSet[[i]] <-
       dplyr::tibble(
         cohortId = cohortDefinitionId,
-        cohortName = paste0("persistence ", persistenceDays[[i]]),
-        persistenceDay = persistenceDays[[i]],
+        cohortName = paste0("gap days ", gapDays[[i]]),
+        persistenceDay = gapDays[[i]],
         cohortTableName = paste0(numeratorCohortTableBaseName, "_", cohortDefinitionId)
       )
   }
-
+  
   cohortDefinitionSet <- dplyr::bind_rows(cohortDefinitionSet)
-
+  
   return(cohortDefinitionSet)
 }

@@ -15,11 +15,11 @@ Depends:
 Imports:
     checkmate,
     CirceR,
-    clock,
     CohortGenerator,
     dplyr,
-    fable,
+    fabletools,
     feasts,
+    ggplot2,
     lifecycle,
     rlang,
     SqlRender,

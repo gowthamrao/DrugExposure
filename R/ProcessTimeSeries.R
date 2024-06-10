@@ -43,19 +43,18 @@ processTimeSeries <-
     
     if (!is.null(weight)) {
       df <- df |>
-        dplyr::select(.data[[dateField]],
-                      .data[[weight]]) |>
-        dplyr::mutate(dateField = .data[[dateField]],
-                      weight = .data[[weight]]) |>
+        dplyr::select(all_of(dateField), all_of(weight)) |>
+        dplyr::mutate(dateField = !!sym(dateField),
+                      weight = !!sym(weight)) |>
         dplyr::group_by(dateField) |>
-        dplyr::summarise(weight = sum(weight))
+        dplyr::summarise(weight = sum(weight, na.rm = TRUE))
     } else {
       df <- df |>
-        dplyr::select(.data[[dateField]]) |>
-        dplyr::mutate(dateField = .data[[dateField]],
+        dplyr::select(all_of(dateField)) |>
+        dplyr::mutate(dateField = !!sym(dateField),
                       weight = 1) |>
         dplyr::group_by(dateField) |>
-        dplyr::summarise(weight = sum(weight))
+        dplyr::summarise(weight = sum(weight, na.rm = TRUE))
     }
     
     result <- list()
@@ -68,19 +67,19 @@ processTimeSeries <-
       } else if (timeRep == 'Month') {
         processedData <- df |>
           dplyr::mutate(timeGroup = tsibble::yearmonth(dateField)) |>
-          dplyr::select(timeGroup, weight)
+          dplyr::select(.data$timeGroup, .data$weight)
       } else if (timeRep == 'Quarter') {
         processedData <- df |>
           dplyr::mutate(timeGroup = tsibble::yearquarter(dateField)) |>
-          dplyr::select(timeGroup, weight)
+          dplyr::select(.data$timeGroup, .data$weight)
       } else if (timeRep == 'Week') {
         processedData <- df |>
           dplyr::mutate(timeGroup = tsibble::yearweek(dateField)) |>
-          dplyr::select(timeGroup, weight)
+          dplyr::select(.data$timeGroup, .data$weight)
       } else if (timeRep == 'Year') {
         processedData <- df |>
           dplyr::mutate(timeGroup = format(dateField, "%Y") |> as.integer()) |>
-          dplyr::select(timeGroup, weight)
+          dplyr::select(.data$timeGroup, .data$weight)
       }
       
       processedData <- processedData |>

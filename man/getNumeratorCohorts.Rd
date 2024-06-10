@@ -10,7 +10,7 @@ getNumeratorCohorts(
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   numeratorCohortTableBaseName = "#numerator",
   drugExposureTable = "#drug_exposure",
-  persistenceDays = c(0),
+  gapDays = c(0),
   baseCohortDefinitionId = 100
 )
 }
@@ -32,9 +32,9 @@ tables, provide a schema with write privileges where temp tables can be created.
 
 \item{drugExposureTable}{The name of the table with "#drug_exposure". Should be a temp table.}
 
-\item{persistenceDays}{Number of days to check for persistence of drug exposure.}
+\item{gapDays}{(optional) Number of days to check for persistence of drug exposure. Can take a array of days, and report will be generated for all. This is also called persistence in Atlas, or collapse era days in cohort definition.}
 
-\item{baseCohortDefinitionId}{The minimum cohortId to create cohorts for all persistenceDays}
+\item{baseCohortDefinitionId}{The minimum cohortId to create cohorts for all gapDays}
 }
 \description{
 This function takes an input a cohort (called denominator to bind the numerator cohort to), a concept set expression

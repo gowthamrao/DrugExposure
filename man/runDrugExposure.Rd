@@ -14,7 +14,7 @@ runDrugExposure(
   denominatorCohortId,
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
-  persistenceDays = c(0)
+  gapDays = c(0)
 )
 }
 \arguments{
@@ -51,7 +51,7 @@ schema name, for example 'vocabulary.dbo'.}
 \item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp
 tables, provide a schema with write privileges where temp tables can be created.}
 
-\item{persistenceDays}{(optional) Number of days to check for persistence of drug exposure. Can take a array of days, and report will be generated for all.}
+\item{gapDays}{(optional) Number of days to check for persistence of drug exposure. Can take a array of days, and report will be generated for all. This is also called persistence in Atlas, or collapse era days in cohort definition.}
 }
 \description{
 This function takes as a input a Circe compatible concept set expression (as r list object that can be converted to json),
