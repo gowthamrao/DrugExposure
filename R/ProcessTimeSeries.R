@@ -95,7 +95,14 @@ processTimeSeries <-
       
       # Extract components and plot
       components <- model |> fabletools::components()
-      plot <- components |> feasts::autoplot()
+      
+      # Create plot
+      plot <- components |>
+        feasts::autoplot() +
+        ggplot2::ggtitle(sprintf("Unit: %s (%s)", timeRep, dateField)) +
+        ggplot2::labs(x = "Time", y = "Value", subtitle = "Seasonal-Trend Decomposition") +
+        ggplot2::theme_minimal() +
+        ggplot2::scale_color_viridis_d()
       
       # Store results in the list
       result[[timeRep]] <-
