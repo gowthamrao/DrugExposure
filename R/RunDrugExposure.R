@@ -549,13 +549,13 @@ runDrugExposure <- function(connectionDetails = NULL,
                     .data$subjectId) |>
     dplyr::mutate(days = sum(.data$cohortEndDate - .data$cohortStartDate + 1) |> as.double()) |>
     dplyr::ungroup() |>
-    dplyr::select(cohortDefinitionId,
-                  days) |>
+    dplyr::select(.data$cohortDefinitionId,
+                  .data$days) |>
     dplyr::inner_join(
       output$cohortDefinitionSet |>
         dplyr::select(.data$cohortId,
                       .data$cohortName) |>
-        dplyr::rename(cohortDefinitionId = cohortId),
+        dplyr::rename(cohortDefinitionId = .data$cohortId),
       by = "cohortDefinitionId"
     )
   

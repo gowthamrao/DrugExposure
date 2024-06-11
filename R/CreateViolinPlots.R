@@ -15,13 +15,9 @@
 #' @param sizeMedian The size of the median symbol. Default is 3.
 #' @param shapeMean The shape of the mean symbol. Default is 18.
 #' @param shapeMedian The shape of the median symbol. Default is 16.
+#' @param angleXLabels What is angle for the x tick labels.
 #'
 #' @return A ggplot object representing the violin plot.
-#'
-#' @examples
-#' createViolinPlot(data = myData, xName = "group", yName = "value", fillName = "category",
-#'                  title = "My Violin Plot", colorMean = "red", colorMedian = "darkgreen",
-#'                  sizeMean = 4, sizeMedian = 4)
 #'
 createViolinPlot <-
   function(data,
@@ -75,7 +71,7 @@ createViolinPlot <-
         show.legend = TRUE
       ) +
       ggplot2::stat_summary(
-        fun = median,
+        fun = stats::median,
         geom = "point",
         color = colorMedian,
         shape = shapeMedian,

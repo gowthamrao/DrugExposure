@@ -41,6 +41,8 @@ createViolinPlot(
 \item{shapeMean}{The shape of the mean symbol. Default is 18.}
 
 \item{shapeMedian}{The shape of the median symbol. Default is 16.}
+
+\item{angleXLabels}{What is angle for the x tick labels.}
 }
 \value{
 A ggplot object representing the violin plot.
@@ -49,10 +51,4 @@ A ggplot object representing the violin plot.
 This function generates a violin plot enhanced with overlaid boxplots and
 symbols for mean and median values. It uses ggplot2 for plotting, viridis for
 color palettes, and hrbrthemes for themes.
-}
-\examples{
-createViolinPlot(data = myData, xName = "group", yName = "value", fillName = "category",
-                 title = "My Violin Plot", colorMean = "red", colorMedian = "darkgreen",
-                 sizeMean = 4, sizeMedian = 4)
-
 }

@@ -15,7 +15,6 @@ Depends:
 Imports:
     checkmate,
     CirceR,
-    CohortGenerator,
     dplyr,
     fabletools,
     feasts,

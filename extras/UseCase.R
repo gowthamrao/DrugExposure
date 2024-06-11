@@ -1,4 +1,4 @@
-baseFolder <- "D://studyResults//epi1177"
+baseFolder <- "D://studyResults//epi_1177"
 dir.create(baseFolder, showWarnings = FALSE, recursive = TRUE)
 
 ROhdsiWebApi::authorizeWebApi(baseUrl = Sys.getenv("BaseUrl"), authMethod = "windows")
@@ -50,5 +50,28 @@ ccae <- DrugExposure::runDrugExposure(
   gapDays = c(0, 7, 14, 30, 60, 90, 120),
   querySource = FALSE
 )
-saveRDS(object = mdcd, file = file.path(baseFolder, "ccae.RDS"))
+saveRDS(object = ccae, file = file.path(baseFolder, "ccae.RDS"))
 
+
+
+#resolved concept ids
+
+laiConcepts <-
+  ConceptSetDiagnostics::resolveConceptSetExpression(
+    conceptSetExpression = conceptSetExpressionLai$expression,
+    connectionDetails = connectionDetails,
+    vocabularyDatabaseSchema = cdmSource$vocabDatabaseSchema
+  )
+
+oralConcepts <- ConceptSetDiagnostics::resolveConceptSetExpression(
+  conceptSetExpression = conceptSetExpressionOral$expression,
+  connectionDetails = connectionDetails,
+  vocabularyDatabaseSchema = cdmSource$vocabDatabaseSchema
+)
+
+laiIngredients <-
+  ConceptSetDiagnostics::getDrugIngredients(
+    connectionDetails = connectionDetails,
+    conceptIds = laiConcepts$conceptId,
+    vocabularyDatabaseSchema = cdmSource$vocabDatabaseSchema
+  )
