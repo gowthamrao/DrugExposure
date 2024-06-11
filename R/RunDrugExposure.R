@@ -491,9 +491,9 @@ runDrugExposure <- function(connectionDetails = NULL,
     dplyr::summarise(sumDays = sum(.data$days),
                      .groups = "drop") |>
     dplyr::ungroup() |>
-    dplyr::mutate(sumDays = dplyr::if_else(condition = sumDays > maxFollowUpDays, 
+    dplyr::mutate(sumDays = dplyr::if_else(condition = .data$sumDays > maxFollowUpDays, 
                                            true = maxFollowUpDays, 
-                                           false = sumDays)) |>
+                                           false = .data$sumDays)) |>
     dplyr::inner_join(combis,
                       by = "cohortDefinitionId", relationship = "many-to-many") |>
     dplyr::filter(thresholdDays <= .data$sumDays) |>
@@ -545,30 +545,31 @@ runDrugExposure <- function(connectionDetails = NULL,
                   y = "Persistence Proportion")
   
   drugAdherenceDays <- output$cohorts |>
-    dplyr::group_by(cohortDefinitionId,
-                    subjectId) |>
-    dplyr::mutate(days = sum(cohortEndDate - cohortStartDate + 1) |> as.double()) |>
+    dplyr::group_by(.data$cohortDefinitionId,
+                    .data$subjectId) |>
+    dplyr::mutate(days = sum(.data$cohortEndDate - .data$cohortStartDate + 1) |> as.double()) |>
     dplyr::ungroup() |>
     dplyr::select(cohortDefinitionId,
                   days) |>
     dplyr::inner_join(
       output$cohortDefinitionSet |>
-        dplyr::select(cohortId,
-                      cohortName) |>
+        dplyr::select(.data$cohortId,
+                      .data$cohortName) |>
         dplyr::rename(cohortDefinitionId = cohortId),
       by = "cohortDefinitionId"
     )
-
+  
   output$drugAdherence <- drugAdherenceDays |>
     calculateSummaryStatistics(value = "days", group = "cohortDefinitionId")
   
   output$drugAdherenceRightCensored <- drugAdherenceDays |>
     dplyr::mutate(days = dplyr::if_else(
-      condition = days > maxFollowUpDays,
+      condition = .data$days > maxFollowUpDays,
       true = maxFollowUpDays,
-      false = days
+      false = .data$days
     )) |>
-    calculateSummaryStatistics(value = "days", group = "cohortDefinitionId")
+    calculateSummaryStatistics(value = "days", 
+                               group = "cohortDefinitionId")
   
   output$drugAherencePlot <-
     createViolinPlot(data = drugAdherenceDays,
@@ -580,9 +581,9 @@ runDrugExposure <- function(connectionDetails = NULL,
       data = drugAdherenceDays |>
         dplyr::mutate(
           days = dplyr::if_else(
-            condition = days > maxFollowUpDays,
+            condition = .data$days > maxFollowUpDays,
             true = maxFollowUpDays,
-            false = days
+            false = .data$days
           )
         ),
       xName = "cohortName",

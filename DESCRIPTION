@@ -20,6 +20,8 @@ Imports:
     fabletools,
     feasts,
     ggplot2,
+    hrbrthemes,
+    viridis,
     lifecycle,
     rlang,
     SqlRender,
