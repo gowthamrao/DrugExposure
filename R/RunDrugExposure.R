@@ -328,7 +328,8 @@ runDrugExposure <- function(connectionDetails = NULL,
       tempEmulationSchema = tempEmulationSchema
     )
   
-  drugExposureCohort <- output$drugExposure |>
+  ## drug exposure cohort 1----
+  drugExposureCohort1 <- output$drugExposure |>
     dplyr::mutate(cohortDefinitionId = 1) |> 
     dplyr::rename(subjectId = .data$personId,
                   cohortStartDate = .data$drugExposureStartDate,
@@ -345,6 +346,29 @@ runDrugExposure <- function(connectionDetails = NULL,
       .data$cohortStartDate,
       .data$cohortEndDate
     )
+  
+  ## drug exposure cohort 2----
+  drugExposureCohort2 <- output$drugExposureDays |> 
+    dplyr::mutate(cohortDefinitionId = 2,
+                  drugExposureEndDate = .data$drugExposureStartDate + .data$daysSupply) |> 
+    dplyr::rename(subjectId = .data$personId,
+                  cohortStartDate = .data$drugExposureStartDate,
+                  cohortEndDate = .data$drugExposureEndDate) |>
+    dplyr::select(
+      .data$cohortDefinitionId,
+      .data$subjectId,
+      .data$cohortStartDate,
+      .data$cohortEndDate
+    ) |>
+    dplyr::arrange(
+      .data$cohortDefinitionId,
+      .data$subjectId,
+      .data$cohortStartDate,
+      .data$cohortEndDate
+    )
+  
+  drugExposureCohort <- dplyr::bind_rows(drugExposureCohort1,
+                                         drugExposureCohort2)
   
   ## get numerator ----
   numeratorCohorts <- c()
@@ -403,6 +427,12 @@ runDrugExposure <- function(connectionDetails = NULL,
       cohortName = 'DrugExposure',
       persistenceDay = 0,
       cohortTableName = "cdm.drug_exposure"
+    ),
+    dplyr::tibble(
+      cohortId = 2,
+      cohortName = 'DrugExposure with right censor (max days)',
+      persistenceDay = 0,
+      cohortTableName = "cdm.drug_exposure"
     )
   )
   
@@ -411,7 +441,7 @@ runDrugExposure <- function(connectionDetails = NULL,
   ## cohort days ----
   output$cohortDays <- dplyr::bind_rows(output$numeratorCohorts,
                                         output$denominator,
-                                        output$drugExposure) |>
+                                        drugExposureCohort) |>
     dplyr::group_by(.data$cohortDefinitionId) |>
     dplyr::summarize(
       persons = n_distinct(.data$subjectId),
