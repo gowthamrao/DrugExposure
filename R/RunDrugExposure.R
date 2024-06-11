@@ -449,13 +449,13 @@ runDrugExposure <- function(connectionDetails = NULL,
     dplyr::select(.data$cohortId) |>
     dplyr::rename(cohortDefinitionId = .data$cohortId) |>
     dplyr::distinct() |>
-    tidyr::expand(cohortDefinitionId, thresholdDays)
-  
+    tidyr::expand(.data$cohortDefinitionId, thresholdDays)
+
   # Summing days and calculating floor of months
   output$drugPersistenceProportion <-
     dplyr::bind_rows(output$numeratorCohorts,
                      output$denominator,
-                     output$drugExposureCohort) |>
+                     drugExposureCohort) |>
     dplyr::mutate(days = as.integer(.data$cohortEndDate - .data$cohortStartDate + 1)) |>
     dplyr::group_by(.data$cohortDefinitionId, .data$subjectId) |>
     dplyr::summarise(sumDays = sum(.data$days),
@@ -474,7 +474,7 @@ runDrugExposure <- function(connectionDetails = NULL,
       dplyr::bind_rows(
         output$numeratorCohorts,
         output$denominator,
-        output$drugExposureCohort
+        drugExposureCohort
       ) |>
         dplyr::group_by(.data$cohortDefinitionId) |>
         dplyr::summarise(totalPersons = dplyr::n_distinct(.data$subjectId)),
@@ -508,7 +508,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     ggplot2::ggplot(
       data = output$drugPersistenceProportion,
       ggplot2::aes(x = thresholdDays,
-                   y = persistenceProportion)
+                   y = .data$persistenceProportion)
     ) +
     ggplot2::geom_line() +  # Use geom_line to connect points
     ggplot2::facet_wrap(~ cohortNameCohortId, scales = "free_y") +
@@ -516,6 +516,6 @@ runDrugExposure <- function(connectionDetails = NULL,
     ggplot2::labs(title = "Persistence Proportion by Threshold Days",
                   x = "Threshold Days",
                   y = "Persistence Proportion")
-  
+  writeLines("Done....")
   return(output)
 }

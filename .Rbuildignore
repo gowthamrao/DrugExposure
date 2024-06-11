@@ -1,4 +1,5 @@
 ^renv$
+^man-roxygen$
 man-roxygenbbb
 ^renv\.lock$
 ^.*\.Rproj$
