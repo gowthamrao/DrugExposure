@@ -45,6 +45,7 @@ createCodeSetTableFromConceptSetExpression <-
       tempEmulationSchema = tempEmulationSchema,
       vocabulary_database_schema = vocabularyDatabaseSchema,
       concept_set_table = conceptSetTable, 
-      progressBar = FALSE
+      progressBar = FALSE,
+      reportOverallTime = FALSE
     )
   }

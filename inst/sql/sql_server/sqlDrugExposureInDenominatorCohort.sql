@@ -32,35 +32,38 @@ ORDER BY drug_exposure_id,
         drug_source_concept_id,
         days_supply;
 
-DROP TABLE IF EXISTS #from_non_standard;
-SELECT drug_exposure_id,
-        person_id,
-        drug_exposure_start_date,
-        drug_exposure_end_date,
-        drug_concept_id,
-        drug_source_concept_id,
-        days_supply
-INTO #from_non_standard
-FROM @cdm_database_schema.drug_exposure de
-INNER JOIN @concept_set_table cs
-	ON de.drug_source_concept_id = cs.concept_id
-INNER JOIN @denominator_cohort_table dc
-	ON dc.subject_id = de.person_id
-		AND dc.cohort_start_date <= de.drug_exposure_start_date
-		AND dc.cohort_end_date >= de.drug_exposure_start_date
-WHERE drug_source_concept_id > 0
-  AND dc.cohort_definition_id = @denominator_cohort_id
-EXCEPT
-SELECT 
-    drug_exposure_id,
-    person_id,
-    drug_exposure_start_date,
-    drug_exposure_end_date,
-    drug_concept_id,
-    drug_source_concept_id,
-    days_supply
-FROM 
-    #from_standard;
+{@query_source} ? {
+  DROP TABLE IF EXISTS #from_non_standard;
+--HINT DISTRIBUTE_ON_KEY(person_id)
+  SELECT drug_exposure_id,
+          person_id,
+          drug_exposure_start_date,
+          drug_exposure_end_date,
+          drug_concept_id,
+          drug_source_concept_id,
+          days_supply
+  INTO #from_non_standard
+  FROM @cdm_database_schema.drug_exposure de
+  INNER JOIN @concept_set_table cs
+  	ON de.drug_source_concept_id = cs.concept_id
+  INNER JOIN @denominator_cohort_table dc
+  	ON dc.subject_id = de.person_id
+  		AND dc.cohort_start_date <= de.drug_exposure_start_date
+  		AND dc.cohort_end_date >= de.drug_exposure_start_date
+  WHERE drug_source_concept_id > 0
+    AND dc.cohort_definition_id = @denominator_cohort_id
+  EXCEPT
+  SELECT 
+      drug_exposure_id,
+      person_id,
+      drug_exposure_start_date,
+      drug_exposure_end_date,
+      drug_concept_id,
+      drug_source_concept_id,
+      days_supply
+  FROM 
+      #from_standard;
+}
 
 SELECT person_id,
         drug_concept_id,
@@ -68,7 +71,7 @@ SELECT person_id,
         drug_exposure_start_date,
         days_supply,
         drug_exposure_end_date,
-        count(*) records
+        standard_field
 INTO @drug_exposure_output
 FROM
 (
@@ -76,6 +79,7 @@ FROM
         drug_concept_id,
         drug_source_concept_id,
         drug_exposure_start_date,
+        standard_field,
         CAST(
             COALESCE(
               DAYS_SUPPLY, 
@@ -89,20 +93,20 @@ FROM
   FROM
   (
   
-    SELECT * FROM #from_standard
-      
+    SELECT s.*, 
+            CAST(1 AS INTEGER) standard_field 
+    FROM #from_standard s
+    
+    {@query_source} ? {
     UNION ALL
     
-    SELECT * from #from_non_standard
+    SELECT ns.*, 
+            CAST(1 AS INTEGER) standard_field 
+    from #from_non_standard ns
+    }
     
     ) f
 ) g
-GROUP BY person_id,
-        drug_concept_id,
-        drug_source_concept_id,
-        drug_exposure_start_date,
-        days_supply,
-        drug_exposure_end_date
   ORDER BY person_id,
       drug_exposure_start_date
 ;

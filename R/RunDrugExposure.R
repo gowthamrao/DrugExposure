@@ -11,6 +11,7 @@
 #' @template ConnectionDetails
 #' @template Connection
 #' @template ConceptSetExpression
+#' @template QuerySource
 #' @template CdmDatabaseSchema
 #' @template VocabularyDatabaseSchema
 #' @template DenominatorCohortDatabaseSchema
@@ -24,6 +25,7 @@
 runDrugExposure <- function(connectionDetails = NULL,
                             connection = NULL,
                             conceptSetExpression,
+                            querySource = TRUE,
                             cdmDatabaseSchema,
                             denominatorCohortDatabaseSchema,
                             denominatorCohortTable,
@@ -74,10 +76,20 @@ runDrugExposure <- function(connectionDetails = NULL,
     conceptSetTable = "#concept_sets",
     denominatorCohortTable = denominatorCohortDatabaseSchemaCohortTable,
     denominatorCohortId = denominatorCohortId,
-    drugExposureOutputTable = "#drug_exposure"
+    drugExposureOutputTable = "#drug_exposure",
+    querySource = querySource
   )
   
   output <- c()
+  
+  output$resolvedConcepts <-
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT DISTINCT concept_id FROM #concept_sets;",
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = tempEmulationSchema
+    ) |>
+    dplyr::tibble()
   
   ## cohortDefinitionSet----
   output$cohortDefinitionSet <-
@@ -116,7 +128,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     dplyr::tibble()
   
   ## code sets ----
-  output$codeSets <- DatabaseConnector::renderTranslateQuerySql(
+  output$concept <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT c.*
             FROM (
@@ -316,16 +328,11 @@ runDrugExposure <- function(connectionDetails = NULL,
       tempEmulationSchema = tempEmulationSchema
     )
   
-  output$drugExposureCohort <- output$drugExposureDays |>
-    dplyr::group_by(.data$personId) |>
-    dplyr::summarise(
-      daysSupply = sum(.data$daysSupply),
-      cohortStartDate = min(.data$drugExposureStartDate),
-      .groups = "drop"
-    ) |>
-    dplyr::mutate(cohortEndDate = .data$cohortStartDate + .data$daysSupply) |>
-    dplyr::rename(subjectId = .data$personId) |>
-    dplyr::mutate(cohortDefinitionId = 1) |>
+  drugExposureCohort <- output$drugExposure |>
+    dplyr::mutate(cohortDefinitionId = 1) |> 
+    dplyr::rename(subjectId = .data$personId,
+                  cohortStartDate = .data$drugExposureStartDate,
+                  cohortEndDate = .data$drugExposureEndDate) |>
     dplyr::select(
       .data$cohortDefinitionId,
       .data$subjectId,
@@ -404,10 +411,10 @@ runDrugExposure <- function(connectionDetails = NULL,
   ## cohort days ----
   output$cohortDays <- dplyr::bind_rows(output$numeratorCohorts,
                                         output$denominator,
-                                        output$drugExposureCohort) |>
+                                        output$drugExposure) |>
     dplyr::group_by(.data$cohortDefinitionId) |>
     dplyr::summarize(
-      persons = n_distinct(subjectId),
+      persons = n_distinct(.data$subjectId),
       events = n(),
       days = as.double(sum(.data$cohortEndDate - .data$cohortStartDate + 1))
     ) |>
@@ -435,7 +442,7 @@ runDrugExposure <- function(connectionDetails = NULL,
   proportionDays <-
     c(maxFollowUpDays * (seq(0, 100, by = 5) / 100)) |> floor() |> unique()
   thresholdDays <-
-    c(daysAsmonth, proportionDays, daysAsWeek) |> unique() |> sort()
+    c(daysAsmonth, proportionDays, daysAsWeek, 100, 200, 300, 400, 500) |> unique() |> sort()
   
   # Cartesian product of distinct cohort_definition_id and months
   combis <- output$cohortDefinitionSet |>
@@ -459,7 +466,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     dplyr::filter(thresholdDays <= .data$sumDays) |>
     dplyr::group_by(.data$cohortDefinitionId, .data$thresholdDays) |>
     dplyr::summarise(
-      personWithPersistentExposure = dplyr::n_distinct(subjectId),
+      personWithPersistentExposure = dplyr::n_distinct(.data$subjectId),
       .groups = "drop"
     ) |>
     dplyr::ungroup() |>
@@ -470,7 +477,7 @@ runDrugExposure <- function(connectionDetails = NULL,
         output$drugExposureCohort
       ) |>
         dplyr::group_by(.data$cohortDefinitionId) |>
-        dplyr::summarise(totalPersons = dplyr::n_distinct(subjectId)),
+        dplyr::summarise(totalPersons = dplyr::n_distinct(.data$subjectId)),
       by = "cohortDefinitionId"
     ) |>
     dplyr::mutate(persistenceProportion = .data$personWithPersistentExposure / .data$totalPersons) |>
@@ -490,7 +497,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     dplyr::mutate(cohortNameCohortId = gsub(
       pattern = "-",
       replacement = "\n",
-      x = cohortName
+      x = .data$cohortName
     )) |>
     dplyr::relocate(.data$cohortId,
                     .data$cohortName) |>

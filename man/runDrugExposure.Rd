@@ -8,6 +8,7 @@ runDrugExposure(
   connectionDetails = NULL,
   connection = NULL,
   conceptSetExpression,
+  querySource = TRUE,
   cdmDatabaseSchema,
   denominatorCohortDatabaseSchema,
   denominatorCohortTable,
@@ -33,6 +34,8 @@ of the function, and closed when the function finishes.}
 \item{conceptSetExpression}{A R object (list) that is conforming to OHDSI Circe concept set expression. Usually
 from ROhdsiWebApi. Defines the cncept set expression as r list object. This is converted to json and given to
 CirceR to get concept set expression sql.}
+
+\item{querySource}{In the drug_exposure table do you want to query drug_source_concept_id. This is set to TRUE by default.}
 
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and

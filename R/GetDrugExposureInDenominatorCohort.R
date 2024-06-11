@@ -6,6 +6,7 @@
 #'
 #' @template Connection
 #' @template ConceptSetExpression
+#' @template QuerySource
 #' @template CdmDatabaseSchema
 #' @template TempEmulationSchema
 #' @template ConceptSetTable
@@ -17,6 +18,7 @@
 getDrugExposureInDenominatorCohort <-
   function(connection = NULL,
            conceptSetExpression,
+           querySource = TRUE,
            cdmDatabaseSchema,
            tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
            conceptSetTable = "#concept_sets",
@@ -31,6 +33,7 @@ getDrugExposureInDenominatorCohort <-
     checkmate::assertCharacter(denominatorCohortTable, len = 1)
     checkmate::assertIntegerish(denominatorCohortId, lower = 0)
     checkmate::assertCharacter(conceptSetTable, len = 1)
+    checkmate::assert_flag(querySource)
 
     sqlDrugExposureInFirstExposuresObservationPeriod <-
       SqlRender::readSql(
@@ -60,7 +63,9 @@ getDrugExposureInDenominatorCohort <-
       drug_exposure_output = drugExposureOutputTable,
       concept_set_table = conceptSetTable,
       denominator_cohort_table = denominatorCohortTable,
-      denominator_cohort_id = denominatorCohortId, 
-      progressBar = FALSE
+      denominator_cohort_id = denominatorCohortId,
+      query_source = as.logical(querySource),
+      progressBar = FALSE,
+      reportOverallTime = FALSE
     )
   }

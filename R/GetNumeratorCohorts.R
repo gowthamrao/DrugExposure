@@ -49,7 +49,8 @@ getNumeratorCohorts <- function(connection = NULL,
       cdm_database_schema = cdmDatabaseSchema,
       era_constructor_pad = gapDays[[i]],
       tempEmulationSchema = tempEmulationSchema, 
-      progressBar = FALSE
+      progressBar = FALSE,
+      reportOverallTime = FALSE
     )
     
     cohortDefinitionSet[[i]] <-
