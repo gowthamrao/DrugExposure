@@ -23,6 +23,7 @@ Imports:
     lifecycle,
     rlang,
     SqlRender,
+    tidyr,
     tsibble
 Suggests:
   Eunomia,

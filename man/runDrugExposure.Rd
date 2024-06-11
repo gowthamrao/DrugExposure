@@ -12,6 +12,7 @@ runDrugExposure(
   denominatorCohortDatabaseSchema,
   denominatorCohortTable,
   denominatorCohortId,
+  maxFollowUpDays = 365,
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   gapDays = c(0)
@@ -43,6 +44,8 @@ schema name, for example 'cdm_data.dbo'.}
 
 \item{denominatorCohortId}{The cohort id of the denominator cohort.}
 
+\item{maxFollowUpDays}{(optional) Number of days to follow the persons in the denominator cohort.}
+
 \item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is
 commonly the same as cdmDatabaseSchema. Note that for
 SQL Server, this should include both the database and
@@ -54,9 +57,11 @@ tables, provide a schema with write privileges where temp tables can be created.
 \item{gapDays}{(optional) Number of days to check for persistence of drug exposure. Can take a array of days, and report will be generated for all. This is also called persistence in Atlas, or collapse era days in cohort definition.}
 }
 \description{
-This function takes as a input a Circe compatible concept set expression (as r list object that can be converted to json),
-a denominator cohort or a set of rules to create the denominator cohort, and checks for occurrence of drug exposure events
-in the drug_exposure table of the CDM for the conceptId in the given concept expression in the period and for the subjects in
-the denominator cohort. It then computes a series of drug utilization metrics (adherence, persistence, utilization, patterns)
+This function takes as a input a Circe compatible concept set expression (as r list object that
+can be converted to json), a denominator cohort or a set of rules to create the denominator
+cohort, and checks for occurrence of drug exposure events in the drug_exposure table of
+the CDM for the conceptId in the given concept expression in the period and for the subjects in
+the denominator cohort. It then computes a series of drug utilization
+metrics (adherence, persistence, utilization, patterns)
 and reports returns a list of objects that maybe utilized in a drug exposure report.
 }

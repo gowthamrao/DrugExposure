@@ -1,9 +1,11 @@
 #' Run Drug Exposure Analysis
 #'
-#' This function takes as a input a Circe compatible concept set expression (as r list object that can be converted to json),
-#' a denominator cohort or a set of rules to create the denominator cohort, and checks for occurrence of drug exposure events
-#' in the drug_exposure table of the CDM for the conceptId in the given concept expression in the period and for the subjects in
-#' the denominator cohort. It then computes a series of drug utilization metrics (adherence, persistence, utilization, patterns)
+#' This function takes as a input a Circe compatible concept set expression (as r list object that
+#' can be converted to json), a denominator cohort or a set of rules to create the denominator
+#' cohort, and checks for occurrence of drug exposure events in the drug_exposure table of
+#' the CDM for the conceptId in the given concept expression in the period and for the subjects in
+#' the denominator cohort. It then computes a series of drug utilization
+#' metrics (adherence, persistence, utilization, patterns)
 #' and reports returns a list of objects that maybe utilized in a drug exposure report.
 #'
 #' @template ConnectionDetails
@@ -16,6 +18,7 @@
 #' @template DenominatorCohortId
 #' @template TempEmulationSchema
 #' @template GapDays
+#' @template MaxFollowUpDays
 #'
 #' @export
 runDrugExposure <- function(connectionDetails = NULL,
@@ -25,9 +28,14 @@ runDrugExposure <- function(connectionDetails = NULL,
                             denominatorCohortDatabaseSchema,
                             denominatorCohortTable,
                             denominatorCohortId,
+                            maxFollowUpDays = 365,
                             vocabularyDatabaseSchema = cdmDatabaseSchema,
                             tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
                             gapDays = c(0)) {
+  print(
+    " to do maxFollowUpDays. denominator cohort should be truncated to maxFollowUpDays. report both denominator cohort and the denominator cohort modified by days."
+  )
+  
   denominatorCohortDatabaseSchemaCohortTable <-
     if (is.null(denominatorCohortDatabaseSchema)) {
       denominatorCohortTable
@@ -83,7 +91,7 @@ runDrugExposure <- function(connectionDetails = NULL,
       baseCohortDefinitionId = 100
     ) |>
     dplyr::tibble() |>
-    dplyr::mutate(cohortName = paste0("Numerator - ", cohortName))
+    dplyr::mutate(cohortName = paste0("Numerator - ", .data$cohortName))
   
   writeLines("Downloading....")
   output$person <- DatabaseConnector::renderTranslateQuerySql(
@@ -107,6 +115,7 @@ runDrugExposure <- function(connectionDetails = NULL,
   ) |>
     dplyr::tibble()
   
+  ## code sets ----
   output$codeSets <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT c.*
@@ -270,6 +279,7 @@ runDrugExposure <- function(connectionDetails = NULL,
   output$denominatorSts <-
     processTimeSeries(df = output$denominator, dateField = "cohortStartDate")
   
+  ## get drug exposure full -----
   output$drugExposure <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT * FROM #drug_exposure;",
@@ -278,6 +288,7 @@ runDrugExposure <- function(connectionDetails = NULL,
   ) |>
     dplyr::tibble()
   
+  ## get drug exposure summary ----
   sqlDrugExposureDays <- "
                       select person_id,
                           drug_exposure_start_date,
@@ -305,14 +316,37 @@ runDrugExposure <- function(connectionDetails = NULL,
       tempEmulationSchema = tempEmulationSchema
     )
   
-  numeratorCohorts <- c()
+  output$drugExposureCohort <- output$drugExposureDays |>
+    dplyr::group_by(.data$personId) |>
+    dplyr::summarise(
+      daysSupply = sum(.data$daysSupply),
+      cohortStartDate = min(.data$drugExposureStartDate),
+      .groups = "drop"
+    ) |>
+    dplyr::mutate(cohortEndDate = .data$cohortStartDate + .data$daysSupply) |>
+    dplyr::rename(subjectId = .data$personId) |>
+    dplyr::mutate(cohortDefinitionId = 1) |>
+    dplyr::select(
+      .data$cohortDefinitionId,
+      .data$subjectId,
+      .data$cohortStartDate,
+      .data$cohortEndDate
+    ) |>
+    dplyr::arrange(
+      .data$cohortDefinitionId,
+      .data$subjectId,
+      .data$cohortStartDate,
+      .data$cohortEndDate
+    )
   
+  ## get numerator ----
+  numeratorCohorts <- c()
   for (i in (1:nrow(output$cohortDefinitionSet))) {
     x1 <- DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
       sql = paste0(
         "SELECT * FROM ",
-        output$cohortDefinitionSet[i, ]$cohortTableName,
+        output$cohortDefinitionSet[i,]$cohortTableName,
         ";"
       ),
       snakeCaseToCamelCase = TRUE,
@@ -327,7 +361,7 @@ runDrugExposure <- function(connectionDetails = NULL,
                 min(cohort_start_date) cohort_start_date,
                 min(cohort_end_date) cohort_end_date
           FROM ",
-        output$cohortDefinitionSet[i, ]$cohortTableName,
+        output$cohortDefinitionSet[i,]$cohortTableName,
         " GROUP BY cohort_definition_id, subject_id;"
       ),
       snakeCaseToCamelCase = TRUE,
@@ -341,8 +375,8 @@ runDrugExposure <- function(connectionDetails = NULL,
     output$cohortDefinitionSet,
     output$cohortDefinitionSet |>
       dplyr::mutate(
-        cohortId = (1000 + cohortId),
-        cohortName = paste0(cohortName,
+        cohortId = (1000 + .data$cohortId),
+        cohortName = paste0(.data$cohortName,
                             " earliest event")
       ),
     dplyr::tibble(
@@ -356,51 +390,125 @@ runDrugExposure <- function(connectionDetails = NULL,
       } else {
         denominatorCohortTable
       }
+    ),
+    dplyr::tibble(
+      cohortId = 1,
+      cohortName = 'DrugExposure',
+      persistenceDay = 0,
+      cohortTableName = "cdm.drug_exposure"
     )
   )
   
   output$numeratorCohorts <- dplyr::bind_rows(numeratorCohorts)
   
+  ## cohort days ----
   output$cohortDays <- dplyr::bind_rows(output$numeratorCohorts,
-                                        output$denominator) |>
-    dplyr::group_by(cohortDefinitionId) |>
+                                        output$denominator,
+                                        output$drugExposureCohort) |>
+    dplyr::group_by(.data$cohortDefinitionId) |>
     dplyr::summarize(
       persons = n_distinct(subjectId),
       events = n(),
-      days = as.double(sum(cohortEndDate - cohortStartDate + 1))
+      days = as.double(sum(.data$cohortEndDate - .data$cohortStartDate + 1))
     ) |>
-    dplyr::rename(cohortId = cohortDefinitionId) |>
-    dplyr::inner_join(output$cohortDefinitionSet |>
-                        dplyr::select(cohortId,
-                                      cohortName),
-                      by = "cohortId")
+    dplyr::rename(cohortId = .data$cohortDefinitionId) |>
+    dplyr::inner_join(
+      output$cohortDefinitionSet |>
+        dplyr::select(.data$cohortId,
+                      .data$cohortName),
+      by = "cohortId"
+    )
+  
+  
+  ## drug persistence proportion----
+  # Create a sequence of months
+  daysAsmonth <-
+    seq(from = 30,
+        by = 30,
+        length.out = ceiling((maxFollowUpDays - 30) / 30) + 1)
+  proportionDays <-
+    c(maxFollowUpDays * (seq(0, 100, by = 5) / 100)) |> floor() |> unique()
+  daysAsWeek <-
+    seq(from = 7,
+        by = 7,
+        length.out = ceiling((maxFollowUpDays - 7) / 7) + 1)
+  proportionDays <-
+    c(maxFollowUpDays * (seq(0, 100, by = 5) / 100)) |> floor() |> unique()
+  thresholdDays <-
+    c(daysAsmonth, proportionDays, daysAsWeek) |> unique() |> sort()
+  
+  # Cartesian product of distinct cohort_definition_id and months
+  combis <- output$cohortDefinitionSet |>
+    dplyr::select(.data$cohortId) |>
+    dplyr::rename(cohortDefinitionId = .data$cohortId) |>
+    dplyr::distinct() |>
+    tidyr::expand(cohortDefinitionId, thresholdDays)
+  
+  # Summing days and calculating floor of months
+  output$drugPersistenceProportion <-
+    dplyr::bind_rows(output$numeratorCohorts,
+                     output$denominator,
+                     output$drugExposureCohort) |>
+    dplyr::mutate(days = as.integer(.data$cohortEndDate - .data$cohortStartDate + 1)) |>
+    dplyr::group_by(.data$cohortDefinitionId, .data$subjectId) |>
+    dplyr::summarise(sumDays = sum(.data$days),
+                     .groups = "drop") |>
+    dplyr::ungroup() |>
+    dplyr::inner_join(combis,
+                      by = "cohortDefinitionId", relationship = "many-to-many") |>
+    dplyr::filter(thresholdDays <= .data$sumDays) |>
+    dplyr::group_by(.data$cohortDefinitionId, .data$thresholdDays) |>
+    dplyr::summarise(
+      personWithPersistentExposure = dplyr::n_distinct(subjectId),
+      .groups = "drop"
+    ) |>
+    dplyr::ungroup() |>
+    dplyr::left_join(
+      dplyr::bind_rows(
+        output$numeratorCohorts,
+        output$denominator,
+        output$drugExposureCohort
+      ) |>
+        dplyr::group_by(.data$cohortDefinitionId) |>
+        dplyr::summarise(totalPersons = dplyr::n_distinct(subjectId)),
+      by = "cohortDefinitionId"
+    ) |>
+    dplyr::mutate(persistenceProportion = .data$personWithPersistentExposure / .data$totalPersons) |>
+    dplyr::select(
+      .data$cohortDefinitionId,
+      .data$thresholdDays,
+      .data$personWithPersistentExposure,
+      .data$persistenceProportion
+    ) |>
+    dplyr::rename(cohortId = .data$cohortDefinitionId) |>
+    dplyr::inner_join(
+      output$cohortDefinitionSet |>
+        dplyr::select(.data$cohortId,
+                      .data$cohortName),
+      by = "cohortId"
+    ) |>
+    dplyr::mutate(cohortNameCohortId = gsub(
+      pattern = "-",
+      replacement = "\n",
+      x = cohortName
+    )) |>
+    dplyr::relocate(.data$cohortId,
+                    .data$cohortName) |>
+    dplyr::arrange(.data$cohortId,
+                   .data$cohortName)
+  
+  output$drugPersistenceProportionGraph <-
+    ggplot2::ggplot(
+      data = output$drugPersistenceProportion,
+      ggplot2::aes(x = thresholdDays,
+                   y = persistenceProportion)
+    ) +
+    ggplot2::geom_line() +  # Use geom_line to connect points
+    ggplot2::facet_wrap(~ cohortNameCohortId, scales = "free_y") +
+    ggplot2::theme_minimal() +  # Optional: a minimal theme
+    ggplot2::labs(title = "Persistence Proportion by Threshold Days",
+                  x = "Threshold Days",
+                  y = "Persistence Proportion")
   
   return(output)
-  
-  # sqlDrugExposureDaySupplyDistribution <- "
-  #     with drug_exposures as
-  #     (
-  #       SELECT DISTINCT person_id,
-  #                       drug_concept_id,
-  #                       drug_exposure_start_date,
-  #                       max(days_supply)
-  #       FROM #drug_exposure de
-  #       GROUP BY person_id,
-  #               drug_concept_id,
-  #               drug_exposure_start_date
-  #     ),
-  #     drug_sequence as
-  #     (
-  #       SELECT drug_concept_id,
-  #               ROW_NUMBER() OVER(PARTITION BY drug_concept_id,
-  #                                 ORDER BY drug_exposure_start_date) dispensation_sequence
-  #       FROM drug_exposures
-  #       GROUP BY drug_concept_id
-  #     )
-  #     SELECT dispensation_sequence,
-  #           drug_concept_id
-  #     FROM drug_sequence
-  #     GROUP BY dispensation_sequence,
-  #         drug_concept_id;
-  # "
 }

@@ -43,12 +43,13 @@ getNumeratorCohorts <- function(connection = NULL,
       end_date = "drug_exposure_end_date",
       source_table = drugExposureTable,
       output_table = paste0(numeratorCohortTableBaseName, "_", cohortDefinitionId),
-      cohort_definition_id = i + 10,
+      cohort_definition_id = cohortDefinitionId,
       cohort_definition_id_not_null = !is.null(cohortDefinitionId),
       person_id = "person_id",
       cdm_database_schema = cdmDatabaseSchema,
       era_constructor_pad = gapDays[[i]],
-      tempEmulationSchema = tempEmulationSchema
+      tempEmulationSchema = tempEmulationSchema, 
+      progressBar = FALSE
     )
     
     cohortDefinitionSet[[i]] <-

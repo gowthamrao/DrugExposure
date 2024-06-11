@@ -60,6 +60,7 @@ getDrugExposureInDenominatorCohort <-
       drug_exposure_output = drugExposureOutputTable,
       concept_set_table = conceptSetTable,
       denominator_cohort_table = denominatorCohortTable,
-      denominator_cohort_id = denominatorCohortId
+      denominator_cohort_id = denominatorCohortId, 
+      progressBar = FALSE
     )
   }

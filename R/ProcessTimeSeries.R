@@ -83,9 +83,9 @@ processTimeSeries <-
       }
       
       processedData <- processedData |>
-        dplyr::group_by(timeGroup) |>
+        dplyr::group_by(.data$timeGroup) |>
         dplyr::summarise(weight = sum(weight)) |>
-        tsibble::as_tsibble(index = timeGroup) |>
+        tsibble::as_tsibble(index = .data$timeGroup) |>
         tsibble::fill_gaps(weight = 0)
       
       # Calculate model

@@ -44,6 +44,7 @@ createCodeSetTableFromConceptSetExpression <-
       sql = conceptSetSql,
       tempEmulationSchema = tempEmulationSchema,
       vocabulary_database_schema = vocabularyDatabaseSchema,
-      concept_set_table = conceptSetTable
+      concept_set_table = conceptSetTable, 
+      progressBar = FALSE
     )
   }
