@@ -557,7 +557,7 @@ runDrugExposure <- function(connectionDetails = NULL,
   drugAdherenceDays <- output$cohorts |>
     dplyr::group_by(.data$cohortDefinitionId,
                     .data$subjectId) |>
-    dplyr::mutate(days = sum(.data$cohortEndDate - .data$cohortStartDate + 1) |> as.double()) |>
+    dplyr::summarise(days = sum(.data$cohortEndDate - .data$cohortStartDate + 1) |> as.double(), .groups = "drop") |>
     dplyr::ungroup() |>
     dplyr::select(.data$cohortDefinitionId,
                   .data$days) |>
@@ -570,7 +570,8 @@ runDrugExposure <- function(connectionDetails = NULL,
     )
   
   output$drugAdherence <- drugAdherenceDays |>
-    calculateSummaryStatistics(value = "days", group = "cohortDefinitionId")
+    calculateSummaryStatistics(value = "days", group = "cohortDefinitionId") |> 
+    dplyr::rename(cohortDefinitionId = .data$group)
   
   output$drugAdherenceRightCensored <- drugAdherenceDays |>
     dplyr::mutate(days = dplyr::if_else(
@@ -579,7 +580,8 @@ runDrugExposure <- function(connectionDetails = NULL,
       false = .data$days
     )) |>
     calculateSummaryStatistics(value = "days", 
-                               group = "cohortDefinitionId")
+                               group = "cohortDefinitionId") |> 
+    dplyr::rename(cohortDefinitionId = .data$group)
   
   output$drugAherencePlot <-
     createViolinPlot(data = drugAdherenceDays,
