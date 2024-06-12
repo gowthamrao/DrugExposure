@@ -118,9 +118,11 @@ runDrugExposure <- function(connectionDetails = NULL,
             INNER JOIN (
                         SELECT DISTINCT subject_id
                         FROM @denominator_cohort_table
+                        WHERE cohort_definition_id = @denominator_cohort_id
                       ) d
             ON p.person_id = d.subject_id;",
     cdm_database_schema = cdmDatabaseSchema,
+    denominator_cohort_id = denominatorCohortId,
     snakeCaseToCamelCase = TRUE,
     tempEmulationSchema = tempEmulationSchema,
     denominator_cohort_table = denominatorCohortDatabaseSchemaCohortTable
@@ -175,12 +177,14 @@ runDrugExposure <- function(connectionDetails = NULL,
               ON c.subject_id = o.person_id
               WHERE o.observation_period_start_date <= c.cohort_start_date AND
                     o.observation_period_end_date >= c.cohort_start_date
+                    AND c.cohort_definition_id = @denominator_cohort_id 
               GROUP BY c.cohort_start_date;
     ",
       denominator_cohort_table = denominatorCohortDatabaseSchemaCohortTable,
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema,
-      cdm_database_schema = cdmDatabaseSchema
+      cdm_database_schema = cdmDatabaseSchema,
+      denominator_cohort_id = denominatorCohortId
     ) |>
     dplyr::tibble()
   
@@ -202,13 +206,15 @@ runDrugExposure <- function(connectionDetails = NULL,
             JOIN @cdm_database_schema.observation_period o
             ON c.subject_id = o.person_id
             WHERE o.observation_period_start_date <= c.cohort_start_date AND
-                  o.observation_period_end_date >= c.cohort_start_date
+                  o.observation_period_end_date >= c.cohort_start_date AND
+                  c.cohort_definition_id = @denominator_cohort_id
             GROUP BY DATEFROMPARTS(YEAR(c.cohort_start_date), MONTH(c.cohort_start_date), 1);
     ",
       denominator_cohort_table = denominatorCohortDatabaseSchemaCohortTable,
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema,
-      cdm_database_schema = cdmDatabaseSchema
+      cdm_database_schema = cdmDatabaseSchema,
+      denominator_cohort_id = denominatorCohortId
     ) |>
     dplyr::tibble()
   
@@ -230,13 +236,15 @@ runDrugExposure <- function(connectionDetails = NULL,
             JOIN @cdm_database_schema.observation_period o
             ON c.subject_id = o.person_id
             WHERE o.observation_period_start_date <= c.cohort_start_date AND
-                  o.observation_period_end_date >= c.cohort_start_date
+                  o.observation_period_end_date >= c.cohort_start_date AND
+                  c.cohort_definition_id = @denominator_cohort_id
             GROUP BY DATEFROMPARTS(YEAR(c.cohort_start_date), 1 + 3 * ((MONTH(c.cohort_start_date) - 1) / 3), 1);
     ",
       denominator_cohort_table = denominatorCohortDatabaseSchemaCohortTable,
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema,
-      cdm_database_schema = cdmDatabaseSchema
+      cdm_database_schema = cdmDatabaseSchema,
+      denominator_cohort_id = denominatorCohortId
     ) |>
     dplyr::tibble()
   
@@ -258,13 +266,15 @@ runDrugExposure <- function(connectionDetails = NULL,
             JOIN @cdm_database_schema.observation_period o
             ON c.subject_id = o.person_id
             WHERE o.observation_period_start_date <= c.cohort_start_date AND
-                  o.observation_period_end_date >= c.cohort_start_date
+                  o.observation_period_end_date >= c.cohort_start_date AND
+                  c.cohort_definition_id = @denominator_cohort_id
             GROUP BY DATEFROMPARTS(YEAR(c.cohort_start_date), 1 + 3 * ((MONTH(c.cohort_start_date) - 1) / 3), 1);
     ",
       denominator_cohort_table = denominatorCohortDatabaseSchemaCohortTable,
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema,
-      cdm_database_schema = cdmDatabaseSchema
+      cdm_database_schema = cdmDatabaseSchema,
+      denominator_cohort_id = denominatorCohortId
     ) |>
     dplyr::tibble()
   
