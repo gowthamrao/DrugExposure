@@ -14,7 +14,8 @@ getDrugExposureInDenominatorCohort(
   denominatorCohortDatabaseSchema = NULL,
   denominatorCohortTable = "#denominator",
   denominatorCohortId = 0,
-  drugExposureOutputTable = "#drug_exposure"
+  drugExposureOutputTable = "#drug_exposure",
+  restrictToCohortPeriod = TRUE
 )
 }
 \arguments{
@@ -46,6 +47,8 @@ tables, provide a schema with write privileges where temp tables can be created.
 \item{denominatorCohortId}{The cohort id of the denominator cohort.}
 
 \item{drugExposureOutputTable}{the output table}
+
+\item{restrictToCohortPeriod}{Do you want to restrict to cohort period? Default = TRUE.}
 }
 \description{
 Given a concept set expression and a denominator cohort to restrict the persons

@@ -18,6 +18,7 @@ Imports:
     dplyr,
     fabletools,
     feasts,
+    FeatureExtraction,
     ggplot2,
     hrbrthemes,
     viridis,

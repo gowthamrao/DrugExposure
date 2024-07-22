@@ -70,7 +70,6 @@ runDrugExposure <- function(connectionDetails = NULL,
   
   getDrugExposureInDenominatorCohort(
     connection = connection,
-    conceptSetExpression = conceptSetExpression,
     cdmDatabaseSchema = cdmDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
     conceptSetTable = "#concept_sets",

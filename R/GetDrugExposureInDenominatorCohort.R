@@ -14,6 +14,7 @@
 #' @template DenominatorCohortTable
 #' @template DenominatorCohortId
 #' @param drugExposureOutputTable the output table
+#' @param restrictToCohortPeriod Do you want to restrict to cohort period? Default = TRUE.
 #'
 getDrugExposureInDenominatorCohort <-
   function(connection = NULL,
@@ -25,7 +26,8 @@ getDrugExposureInDenominatorCohort <-
            denominatorCohortDatabaseSchema = NULL,
            denominatorCohortTable = "#denominator",
            denominatorCohortId = 0,
-           drugExposureOutputTable = "#drug_exposure") {
+           drugExposureOutputTable = "#drug_exposure",
+           restrictToCohortPeriod = TRUE) {
     # Validate inputs
     checkmate::assertList(conceptSetExpression, min.len = 1)
     checkmate::assertCharacter(cdmDatabaseSchema, len = 1)
@@ -65,6 +67,7 @@ getDrugExposureInDenominatorCohort <-
       denominator_cohort_table = denominatorCohortTable,
       denominator_cohort_id = denominatorCohortId,
       query_source = as.logical(querySource),
+      restrict_to_cohort_period = restrictToCohortPeriod,
       progressBar = FALSE,
       reportOverallTime = FALSE
     )

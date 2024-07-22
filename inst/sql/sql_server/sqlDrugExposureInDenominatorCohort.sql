@@ -18,10 +18,18 @@ INTO #from_standard
 FROM @cdm_database_schema.drug_exposure de
 INNER JOIN @concept_set_table cs
 	ON de.drug_concept_id = cs.concept_id
-INNER JOIN @denominator_cohort_table dc
-	ON dc.subject_id = de.person_id
-		AND dc.cohort_start_date <= de.drug_exposure_start_date
-		AND dc.cohort_end_date >= de.drug_exposure_start_date
+INNER JOIN {@restrict_to_cohort_period} ? {
+      @denominator_cohort_table dc
+	      ON dc.subject_id = de.person_id
+      		AND dc.cohort_start_date <= de.drug_exposure_start_date
+      		AND dc.cohort_end_date >= de.drug_exposure_start_date} : {
+		  (
+		      SELECT DISTINCT cohort_definition_id, subject_id
+		      FROM @denominator_cohort_table
+		      WHERE cohort_definition_id = @denominator_cohort_id
+		  ) dc
+	        ON dc.subject_id = de.person_id
+		}
 WHERE drug_concept_id > 0
   AND dc.cohort_definition_id = @denominator_cohort_id
 ORDER BY drug_exposure_id,
@@ -46,10 +54,18 @@ ORDER BY drug_exposure_id,
   FROM @cdm_database_schema.drug_exposure de
   INNER JOIN @concept_set_table cs
   	ON de.drug_source_concept_id = cs.concept_id
-  INNER JOIN @denominator_cohort_table dc
-  	ON dc.subject_id = de.person_id
-  		AND dc.cohort_start_date <= de.drug_exposure_start_date
-  		AND dc.cohort_end_date >= de.drug_exposure_start_date
+  INNER JOIN {@restrict_to_cohort_period} ? {
+        @denominator_cohort_table dc
+  	      ON dc.subject_id = de.person_id
+        		AND dc.cohort_start_date <= de.drug_exposure_start_date
+        		AND dc.cohort_end_date >= de.drug_exposure_start_date} : {
+  		  (
+  		      SELECT DISTINCT cohort_definition_id, subject_id
+  		      FROM @denominator_cohort_table
+  		      WHERE cohort_definition_id = @denominator_cohort_id
+  		  ) dc
+  	        ON dc.subject_id = de.person_id
+  		}
   WHERE drug_source_concept_id > 0
     AND dc.cohort_definition_id = @denominator_cohort_id
   EXCEPT

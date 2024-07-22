@@ -40,7 +40,18 @@ testthat::test_that("Test creating drug exposure using temp tables", {
 
   testthat::expect_true(object = nrow(cohort) >= 0)
 
-
+  getDrugExposureInDenominatorCohort(
+    connection = connection,
+    conceptSetExpression = conceptSetExpression,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    conceptSetTable = "#concept_sets",
+    denominatorCohortDatabaseSchema = NULL,
+    denominatorCohortTable = paste0("#", denominatorCohortTable),
+    denominatorCohortId = 0,
+    drugExposureOutputTable = "#drug_exposure", 
+    restrictToCohortPeriod = TRUE
+  )
 
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
