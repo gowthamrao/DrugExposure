@@ -109,14 +109,29 @@ FROM
   FROM
   (
   
-    SELECT s.*, 
+    SELECT s.person_id,
+            s.drug_concept_id,
+            s.drug_source_concept_id,
+            s.drug_exposure_start_date,
+            {@force_minimum_days_supply} ? {CASE WHEN (days_supply IS NULL OR days_supply < @force_minimum_days_supply_value) 
+                                                THEN @force_minimum_days_suppply_value 
+                                            ELSE days_supply END
+                                            } : {days_supply}, 
             CAST(1 AS INTEGER) standard_field 
     FROM #from_standard s
     
     {@query_source} ? {
     UNION ALL
     
-    SELECT ns.*, 
+    SELECT  ns.person_id,
+            ns.drug_concept_id,
+            ns.drug_source_concept_id,
+            ns.drug_exposure_start_date,
+            ns.standard_field,
+            {@force_minimum_days_supply} ? {CASE WHEN (days_supply IS NULL OR days_supply < @force_minimum_days_supply_value) 
+                                                THEN @force_minimum_days_suppply_value 
+                                            ELSE days_supply END
+                                            } : {days_supply}, 
             CAST(1 AS INTEGER) standard_field 
     from #from_non_standard ns
     }

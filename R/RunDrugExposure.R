@@ -20,6 +20,7 @@
 #' @template TempEmulationSchema
 #' @template GapDays
 #' @template MaxFollowUpDays
+#' @param forceMinimumDaysSupply (Default 1, i.e. not used). Acceptable values are NULL, or any integer value to represent days.
 #'
 #' @export
 runDrugExposure <- function(connectionDetails = NULL,
@@ -30,6 +31,7 @@ runDrugExposure <- function(connectionDetails = NULL,
                             denominatorCohortDatabaseSchema,
                             denominatorCohortTable,
                             denominatorCohortId,
+                            forceMinimumDaysSupply = 1,
                             maxFollowUpDays = 365,
                             vocabularyDatabaseSchema = cdmDatabaseSchema,
                             tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
@@ -76,6 +78,7 @@ runDrugExposure <- function(connectionDetails = NULL,
     denominatorCohortTable = denominatorCohortDatabaseSchemaCohortTable,
     denominatorCohortId = denominatorCohortId,
     drugExposureOutputTable = "#drug_exposure",
+    forceMinimumDaysSupply = forceMinimumDaysSupply,
     querySource = querySource
   )
   

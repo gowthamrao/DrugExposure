@@ -13,6 +13,7 @@ runDrugExposure(
   denominatorCohortDatabaseSchema,
   denominatorCohortTable,
   denominatorCohortId,
+  forceMinimumDaysSupply = 1,
   maxFollowUpDays = 365,
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
@@ -46,6 +47,8 @@ schema name, for example 'cdm_data.dbo'.}
 \item{denominatorCohortTable}{The cohort table name that has the denominator cohort.}
 
 \item{denominatorCohortId}{The cohort id of the denominator cohort.}
+
+\item{forceMinimumDaysSupply}{(Default 1, i.e. not used). Acceptable values are NULL, or any integer value to represent days.}
 
 \item{maxFollowUpDays}{(optional) Number of days to follow the persons in the denominator cohort.}
 

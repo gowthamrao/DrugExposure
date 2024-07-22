@@ -14,6 +14,7 @@ getDrugExposureInDenominatorCohort(
   denominatorCohortDatabaseSchema = NULL,
   denominatorCohortTable = "#denominator",
   denominatorCohortId = 0,
+  forceMinimumDaysSupply = 1,
   drugExposureOutputTable = "#drug_exposure",
   restrictToCohortPeriod = TRUE
 )
@@ -45,6 +46,8 @@ tables, provide a schema with write privileges where temp tables can be created.
 \item{denominatorCohortTable}{The cohort table name that has the denominator cohort.}
 
 \item{denominatorCohortId}{The cohort id of the denominator cohort.}
+
+\item{forceMinimumDaysSupply}{(Default 1, i.e. not used). Acceptable values are NULL, or any integer value to represent days.}
 
 \item{drugExposureOutputTable}{the output table}
 

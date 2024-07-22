@@ -13,6 +13,7 @@
 #' @template DenominatorCohortDatabaseSchema
 #' @template DenominatorCohortTable
 #' @template DenominatorCohortId
+#' @param forceMinimumDaysSupply (Default 1, i.e. not used). Acceptable values are NULL, or any integer value to represent days.
 #' @param drugExposureOutputTable the output table
 #' @param restrictToCohortPeriod Do you want to restrict to cohort period? Default = TRUE.
 #'
@@ -26,6 +27,7 @@ getDrugExposureInDenominatorCohort <-
            denominatorCohortDatabaseSchema = NULL,
            denominatorCohortTable = "#denominator",
            denominatorCohortId = 0,
+           forceMinimumDaysSupply = 1,
            drugExposureOutputTable = "#drug_exposure",
            restrictToCohortPeriod = TRUE) {
     # Validate inputs
@@ -36,6 +38,7 @@ getDrugExposureInDenominatorCohort <-
     checkmate::assertIntegerish(denominatorCohortId, lower = 0)
     checkmate::assertCharacter(conceptSetTable, len = 1)
     checkmate::assert_flag(querySource)
+    checkmate::assertInt(x = forceMinimumDaysSupply, null.ok = TRUE, lower = 0)
 
     sqlDrugExposureInFirstExposuresObservationPeriod <-
       SqlRender::readSql(
@@ -68,6 +71,8 @@ getDrugExposureInDenominatorCohort <-
       denominator_cohort_id = denominatorCohortId,
       query_source = as.logical(querySource),
       restrict_to_cohort_period = restrictToCohortPeriod,
+      force_minimum_days_supply = !is.null(forceMinimumDaysSupply),
+      force_minimum_days_supply_value = forceMinimumDaysSupply,
       progressBar = FALSE,
       reportOverallTime = FALSE
     )
