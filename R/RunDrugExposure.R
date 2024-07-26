@@ -316,7 +316,9 @@ runDrugExposure <- function(connectionDetails = NULL,
   sqlDrugExposureDays <- "
                       select person_id,
                           drug_exposure_start_date,
-                        	SUM(CASE WHEN DATEADD(day, DAYS_SUPPLY, DRUG_EXPOSURE_START_DATE) > cohort_end_date THEN
+                        	SUM(CASE WHEN DATEADD(day, 
+                        	        DAYS_SUPPLY, 
+                        	        DRUG_EXPOSURE_START_DATE) > cohort_end_date THEN
                         	    DATEDIFF(day, DRUG_EXPOSURE_START_DATE, DRUG_EXPOSURE_END_DATE) + 1 ELSE days_supply END
                         	    ) days_supply
                       from @denominator_cohort_table c

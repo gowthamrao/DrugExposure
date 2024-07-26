@@ -5,7 +5,6 @@
 #' that has the records from drug_exposure table.
 #'
 #' @template Connection
-#' @template ConceptSetExpression
 #' @template QuerySource
 #' @template CdmDatabaseSchema
 #' @template TempEmulationSchema
@@ -19,7 +18,6 @@
 #'
 getDrugExposureInDenominatorCohort <-
   function(connection = NULL,
-           conceptSetExpression,
            querySource = TRUE,
            cdmDatabaseSchema,
            tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
@@ -31,7 +29,6 @@ getDrugExposureInDenominatorCohort <-
            drugExposureOutputTable = "#drug_exposure",
            restrictToCohortPeriod = TRUE) {
     # Validate inputs
-    checkmate::assertList(conceptSetExpression, min.len = 1)
     checkmate::assertCharacter(cdmDatabaseSchema, len = 1)
     checkmate::assertCharacter(tempEmulationSchema, len = 1, null.ok = TRUE)
     checkmate::assertCharacter(denominatorCohortTable, len = 1)
@@ -72,7 +69,7 @@ getDrugExposureInDenominatorCohort <-
       query_source = as.logical(querySource),
       restrict_to_cohort_period = restrictToCohortPeriod,
       force_minimum_days_supply = !is.null(forceMinimumDaysSupply),
-      force_minimum_days_supply_value = forceMinimumDaysSupply,
+      force_minimum_days_suppply_value = forceMinimumDaysSupply,
       progressBar = FALSE,
       reportOverallTime = FALSE
     )

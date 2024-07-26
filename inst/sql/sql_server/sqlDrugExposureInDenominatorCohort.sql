@@ -81,63 +81,74 @@ ORDER BY drug_exposure_id,
       #from_standard;
 }
 
+
+
+
 SELECT person_id,
         drug_concept_id,
         drug_source_concept_id,
         drug_exposure_start_date,
+        CASE WHEN drug_exposure_end_date < drug_exposure_start_date + days_supply THEN drug_exposure_start_date + days_supply ELSE drug_exposure_end_date END drug_exposure_end_date,
         days_supply,
-        drug_exposure_end_date,
         standard_field
-INTO @drug_exposure_output
 FROM
-(
-  SELECT person_id,
-        drug_concept_id,
-        drug_source_concept_id,
-        drug_exposure_start_date,
-        standard_field,
-        CAST(
-            COALESCE(
-              DAYS_SUPPLY, 
-              DATEDIFF(day, DRUG_EXPOSURE_START_DATE, DRUG_EXPOSURE_END_DATE)
-            ) AS INTEGER
-          ) DAYS_SUPPLY,
-      	CAST(COALESCE(DRUG_EXPOSURE_END_DATE, 
-        		          DATEADD(day, DAYS_SUPPLY, DRUG_EXPOSURE_START_DATE), 
-        		          DATEADD(day, 1, DRUG_EXPOSURE_START_DATE)
-        		        ) AS DATE) AS DRUG_EXPOSURE_END_DATE
-  FROM
   (
-  
-    SELECT s.person_id,
-            s.drug_concept_id,
-            s.drug_source_concept_id,
-            s.drug_exposure_start_date,
-            {@force_minimum_days_supply} ? {CASE WHEN (days_supply IS NULL OR days_supply < @force_minimum_days_supply_value) 
-                                                THEN @force_minimum_days_suppply_value 
-                                            ELSE days_supply END
-                                            } : {days_supply}, 
-            CAST(1 AS INTEGER) standard_field 
-    FROM #from_standard s
-    
-    {@query_source} ? {
-    UNION ALL
-    
-    SELECT  ns.person_id,
-            ns.drug_concept_id,
-            ns.drug_source_concept_id,
-            ns.drug_exposure_start_date,
-            ns.standard_field,
-            {@force_minimum_days_supply} ? {CASE WHEN (days_supply IS NULL OR days_supply < @force_minimum_days_supply_value) 
-                                                THEN @force_minimum_days_suppply_value 
-                                            ELSE days_supply END
-                                            } : {days_supply}, 
-            CAST(1 AS INTEGER) standard_field 
-    from #from_non_standard ns
-    }
-    
-    ) f
-) g
+  SELECT person_id,
+          drug_concept_id,
+          drug_source_concept_id,
+          drug_exposure_start_date,
+          drug_exposure_end_date,
+          {@force_minimum_days_supply} ? {CASE WHEN (days_supply IS NULL OR days_supply < @force_minimum_days_suppply_value) 
+                                              THEN @force_minimum_days_suppply_value 
+                                          ELSE days_supply END
+                                          } : {days_supply} days_supply,
+          standard_field
+  INTO @drug_exposure_output
+  FROM
+    (
+      SELECT person_id,
+            drug_concept_id,
+            drug_source_concept_id,
+            drug_exposure_start_date,
+          	CAST(COALESCE(DRUG_EXPOSURE_END_DATE, 
+            		          DATEADD(day, DAYS_SUPPLY, DRUG_EXPOSURE_START_DATE), 
+            		          DATEADD(day, 1, DRUG_EXPOSURE_START_DATE)
+            		        ) AS DATE) AS DRUG_EXPOSURE_END_DATE,
+            standard_field,
+            CAST(
+                COALESCE(
+                  DAYS_SUPPLY, 
+                  DATEDIFF(day, DRUG_EXPOSURE_START_DATE, DRUG_EXPOSURE_END_DATE)
+                ) AS INTEGER
+              ) DAYS_SUPPLY
+      FROM
+      (
+      
+        SELECT s.person_id,
+                s.drug_concept_id,
+                s.drug_source_concept_id,
+                s.drug_exposure_start_date,
+                s.drug_exposure_end_date,
+                s.days_supply, 
+                CAST(1 AS INTEGER) standard_field 
+        FROM #from_standard s
+        
+        {@query_source} ? {
+        UNION ALL
+        
+        SELECT  ns.person_id,
+                ns.drug_concept_id,
+                ns.drug_source_concept_id,
+                ns.drug_exposure_start_date,
+                ns.drug_exposure_end_date,
+                ns.days_supply, 
+                CAST(0 AS INTEGER) standard_field 
+        from #from_non_standard ns
+        }
+        
+        ) unionOfSource
+    ) nonMissingDates
+  ) daysSupplyCorrected
   ORDER BY person_id,
       drug_exposure_start_date
 ;

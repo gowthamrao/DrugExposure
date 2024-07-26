@@ -6,7 +6,6 @@
 \usage{
 getDrugExposureInDenominatorCohort(
   connection = NULL,
-  conceptSetExpression,
   querySource = TRUE,
   cdmDatabaseSchema,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
@@ -25,10 +24,6 @@ getDrugExposureInDenominatorCohort(
 DatabaseConnector package. Can be left NULL if \code{connectionDetails}
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.}
-
-\item{conceptSetExpression}{A R object (list) that is conforming to OHDSI Circe concept set expression. Usually
-from ROhdsiWebApi. Defines the cncept set expression as r list object. This is converted to json and given to
-CirceR to get concept set expression sql.}
 
 \item{querySource}{In the drug_exposure table do you want to query drug_source_concept_id. This is set to TRUE by default.}
 
