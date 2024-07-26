@@ -91,6 +91,7 @@ SELECT person_id,
         CASE WHEN drug_exposure_end_date < drug_exposure_start_date + days_supply THEN drug_exposure_start_date + days_supply ELSE drug_exposure_end_date END drug_exposure_end_date,
         days_supply,
         standard_field
+INTO @drug_exposure_output
 FROM
   (
   SELECT person_id,
@@ -103,7 +104,6 @@ FROM
                                           ELSE days_supply END
                                           } : {days_supply} days_supply,
           standard_field
-  INTO @drug_exposure_output
   FROM
     (
       SELECT person_id,
